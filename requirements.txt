@@ -1,0 +1,10 @@
+statsbombpy>=1.13
+numpy>=2.1
+pandas>=2.2
+networkx>=3.4
+jsonschema>=4.23
+matplotlib>=3.9
+mplsoccer>=1.4
+streamlit>=1.40
+pytest>=8.3
+jupyter>=1.1
