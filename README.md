@@ -14,8 +14,12 @@ python -m venv .venv
 .venv\Scripts\activate              # Windows; macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
 pip install -e .
+python scripts/download_data.py     # ~400 MB of StatsBomb open data into data/raw/ (--limit 3 for a quick start)
 pytest
 ```
 
 ## Data
-Uses [StatsBomb open data](https://github.com/statsbomb/open-data).
+All 34 Bundesliga matches of Bayer Leverkusen's 2023/24 season (unbeaten: 28 wins, 6 draws), with event data and
+360 freeze-frames. → [notes](docs/methodology/01_data.md)
+
+Data provided by [StatsBomb](https://statsbomb.com/) through its [open-data repository](https://github.com/statsbomb/open-data).
