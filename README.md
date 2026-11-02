@@ -18,6 +18,13 @@ python scripts/download_data.py     # ~400 MB of StatsBomb open data into data/r
 pytest
 ```
 
+## Search interface
+```bash
+streamlit run app/app.py
+```
+Type a question or pick an example; the page shows how the question was read, the moments found, where they
+started, and the selected moment on the pitch. → [notes](docs/methodology/08_interface.md)
+
 ## Data
 All 34 Bundesliga matches of Bayer Leverkusen's 2023/24 season (unbeaten: 28 wins, 6 draws), with event data and
 360 freeze-frames. → [notes](docs/methodology/01_data.md)

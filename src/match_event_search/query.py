@@ -274,27 +274,29 @@ def _matches_in_scope(scope: dict, g) -> list:
 
 
 def results_table(found: list[Match], g) -> pd.DataFrame:
+    """One row per moment, built column by column (a broad query finds tens of thousands)."""
     tags = g.graph["tags"]
-    rows = []
-    for m in found:
-        first, last = tags.loc[m.steps[0]], tags.loc[m.steps[-1]]
-        info = g.nodes[f"match:{first.match_id}"]
-        players = list(dict.fromkeys(p for p in tags.loc[m.steps, "player"] if isinstance(p, str)))
-        rows.append({
-            "match": f"{info['date']} {info['home_team']} {info['home_score']}-{info['away_score']} "
-                     f"{info['away_team']}",
-            "match_id": first.match_id,
-            "period": first.period,
-            "minute": first.minute,
-            "second": first.second,
-            "players": ", ".join(players),
-            "outcome": last.outcome_detail if isinstance(last.outcome_detail, str) else last.outcome,
-            "duration_s": round(last.t - first.t, 1),
-            "steps": m.steps,
-            "span": m.span,
-        })
     columns = ["match", "match_id", "period", "minute", "second", "players", "outcome",
                "duration_s", "steps", "span"]
-    table = pd.DataFrame(rows, columns=columns)
+    if not found:
+        return pd.DataFrame(columns=columns)
+    first = tags.loc[[m.steps[0] for m in found]].reset_index(drop=True)
+    last = tags.loc[[m.steps[-1] for m in found]].reset_index(drop=True)
+    labels = {d["match_id"]: f"{d['date']} {d['home_team']} {d['home_score']}-{d['away_score']} {d['away_team']}"
+              for _, d in g.nodes(data=True) if d["kind"] == "match"}
+    player = tags.player.to_dict()
+    table = pd.DataFrame({
+        "match": first.match_id.map(labels),
+        "match_id": first.match_id,
+        "period": first.period,
+        "minute": first.minute,
+        "second": first.second,
+        "players": [", ".join(dict.fromkeys(p for p in map(player.get, m.steps) if isinstance(p, str)))
+                    for m in found],
+        "outcome": last.outcome_detail.where(last.outcome_detail.map(lambda v: isinstance(v, str)), last.outcome),
+        "duration_s": (last.t - first.t).round(1),
+        "steps": [m.steps for m in found],
+        "span": [m.span for m in found],
+    })
     # The match label starts with the date, so this sorts by date and match time.
     return table.sort_values(["match", "period", "minute", "second"], kind="stable").reset_index(drop=True)
