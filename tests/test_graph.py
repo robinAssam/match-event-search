@@ -132,3 +132,24 @@ def test_opening_goal_follows_the_turnover_after_10_5_seconds(season):
                                           for e, _ in following(g, werner, within_s=10)}
     # Within Leipzig's possession only Kossonou's block follows; Xhaka's recovery starts a new one.
     assert [t.loc[e, "player"] for e, _ in following(g, werner, same_possession=True)] == ["Odilon Kossonou"]
+
+
+US_TEAM, OTHER = "Bayer Leverkusen", "Borussia Dortmund"
+
+
+def test_following_can_stop_when_the_ball_goes_dead():
+    """A throw-in starts possession 3: with stop_at_restart the walk ends before it."""
+    rows = [("e1", 0.0, 1, US_TEAM), ("e2", 1.0, 2, OTHER), ("e3", 5.0, 3, OTHER), ("e4", 6.0, 3, OTHER)]
+    tags = pd.DataFrame(rows, columns=["id", "t", "possession", "team"])
+    tags["player"] = ["A", "B", "B", "C"]
+    tags["index"], tags["match_id"], tags["period"], tags["x"] = range(1, 5), 1, 1, 50.0
+    tags["possession_team"] = tags.team
+    tags["play_pattern"] = tags.possession.map({1: "Regular Play", 2: "Regular Play", 3: "From Throw In"})
+    matches = pd.DataFrame([{"match_id": 1, "match_date": "2024-04-21", "home_team": US_TEAM, "away_team": OTHER,
+                             "home_score": 0, "away_score": 0}])
+    g = graph.build_graph(tags, matches)
+    assert [e for e, _ in following(g, "e1")] == ["e2", "e3", "e4"]
+    assert [e for e, _ in following(g, "e1", stop_at_restart=True)] == ["e2"]
+    # Along same_player edges too: B's next action (e3) comes after the throw-in.
+    assert [e for e, _ in following(g, "e2", key="same_player", stop_at_restart=True)] == []
+

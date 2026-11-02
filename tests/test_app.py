@@ -29,7 +29,7 @@ def test_page_opens_with_the_first_example(app):
 def test_a_misspelt_question_is_corrected_and_answered(app):
     app.text_input(key="question").set_value("goalkeeper pass to defender intercepted and led to conceeding goal").run()
     assert not app.exception
-    assert app.subheader[0].value == "1 moment"
+    assert app.subheader[0].value == "0 moments"  # the goal came after a throw-in
     assert app.info[0].value == "Read “conceeding” as “conceding”"
 
 
@@ -42,25 +42,27 @@ def test_the_llm_parser_without_a_model_falls_back_and_says_so(app):
     app.radio(key="parser").set_value("LLM (v2)").run()
     app.text_input(key="question").set_value("goalkeeper pass to defender intercepted and led to conceeding goal").run()
     assert not app.exception
-    assert app.subheader[0].value == "1 moment"
+    assert app.subheader[0].value == "0 moments"
     assert "The LLM parser was not used: no model configured" in app.warning[0].value
 
 
 def test_stepping_through_a_moment(app):
     app.radio(key="parser").set_value("Rule-based (v1)").run()
-    app.text_input(key="question").set_value("Turnovers in our own box that led to goal conceeded").run()
-    assert app.session_state.frame == 10  # a new moment opens on the whole move
+    app.text_input(key="question").set_value("Regains in the final third that led to a goal").run()
+    n = app.slider(key="frame").max
+    assert app.session_state.frame == n  # a new moment opens on the whole move
     press = lambda label: next(b for b in app.button if b.label == label).click().run()
-    press("⏮ Start")
+    press("⏮ Start")  # the first result: Leverkusen's opening goal of the season, against Leipzig
     assert app.session_state.frame == 1
-    assert any("Lukáš Hrádecký · pass" in m.value and "step 1 of the question" in m.value for m in app.markdown)
-    assert any(":green-badge[turnover]" in m.value for m in app.markdown)
+    assert any("Granit Xhaka · ball recovery" in m.value and "step 1 of the question" in m.value
+               for m in app.markdown)
+    assert any(":green-badge[regain]" in m.value for m in app.markdown)
     press("Next ▶")
     assert app.session_state.frame == 2
-    assert any("Marcel Sabitzer · pass" in m.value for m in app.markdown)
+    assert any("Granit Xhaka · carry" in m.value for m in app.markdown)
     press("◀ Back")
     press("◀ Back")  # cannot go before the first event
     assert app.session_state.frame == 1
     press("End ⏭")
-    assert app.session_state.frame == 10
-    assert any("Niclas Füllkrug · shot" in m.value and "step 2 of the question" in m.value for m in app.markdown)
+    assert app.session_state.frame == n
+    assert any("Jeremie Frimpong · shot" in m.value and "step 2 of the question" in m.value for m in app.markdown)

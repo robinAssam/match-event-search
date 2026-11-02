@@ -62,9 +62,10 @@ ignoring words such as "FC" and "Borussia", with a few common names added ("BVB"
 ## Found by testing
 The question "goalkeeper pass to defender intercepted and led to conceeding goal" first came out as the opposite
 (our goalkeeper's passes followed by *our* goals): "conceeding" was misspelt, "defender" and "to a defender" were
-unknown, "intercepted" was read as an interception by our goalkeeper, and 15 s was too short. After the fixes above it
-finds the season's one such goal: Dortmund 1–1 Leverkusen, 80:06, Hrádecký's pass meant for Stanišić lost, Füllkrug
-scoring 19 s later after a throw-in.
+unknown, "intercepted" was read as an interception by our goalkeeper, and 15 s was too short. After these fixes it
+found Dortmund 1–1 Leverkusen, 80:06: Hrádecký's pass meant for Stanišić lost, Füllkrug scoring 19 s later. The video
+showed that goal came from a Dortmund throw-in after the ball went out, so sequences now stop at a dead ball
+(stage 4) and the honest answer for the season is none.
 
 ## Known limits (still)
 

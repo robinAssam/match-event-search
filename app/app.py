@@ -50,6 +50,7 @@ GUIDE = """
 - No team mentioned means Leverkusen; say *their*, *opponent* or *conceded* for the other team.
 - A turnover is placed where the losing action started (a pass played from our box is a turnover in our box);
   for where the opponent won the ball, ask for *opponent regains in our box*.
+- "Led to" stops when the ball goes dead (throw-in, free kick, corner, goal kick, kick-off, keeper restart).
 - Give sequences a time limit ("within 20 seconds"). Without one, the next step must be in the same possession,
   or within 15 s when the ball changes team (30 s when it is a goal).
 - Small typos in football words are corrected (shown above the results); names must be spelt right.

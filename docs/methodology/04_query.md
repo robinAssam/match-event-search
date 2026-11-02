@@ -26,6 +26,7 @@ A query has either `event` (a filter on single events) or `sequence` (two or mor
 | `same_possession` | `true`: still in the previous step's possession |
 | `team` | `"same"` or `"other"` team as the previous step |
 | `via` | `"next"` (default): every following event; `"same_player"`: only the same player's actions |
+| `through_restarts` | `true`: keep looking after the ball has gone dead (default `false`: stop at a throw-in, free kick, corner, goal kick, kick-off or goalkeeper restart) |
 
 Each later step needs `within_s` or `"same_possession": true`, so that "followed by" always ends somewhere.
 
@@ -59,6 +60,12 @@ Each later step needs `within_s` or `"same_possession": true`, so that "followed
    `role_group` and `role_side` is the parser's job.
 4. **No OR across fields** yet: `"action": ["pass", "shot"]` works, "progressive passes or anything in the box"
    does not. None of the example questions needs it.
+
+5. **"Led to" stops when the ball goes dead.** A later step is not searched past a new possession that starts
+   from a throw-in, free kick, corner, goal kick, kick-off or the goalkeeper's hands. Found by watching the video:
+   Hrádecký's lost pass at Dortmund (80:06) was followed by a goal 19 s later, but only after the ball went out for
+   a Dortmund throw-in, so the turnover did not lead to the goal. Of the example questions only goals after
+   turnovers changed (5 → 4 for "turnovers that led to a goal conceded"). `"through_restarts": true` keeps looking.
 
 `minute` is StatsBomb's minute, which starts at 0: "after the 60th minute" is `{"gte": 60}`, from 60:00 onwards.
 

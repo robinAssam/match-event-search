@@ -99,6 +99,9 @@ LATER_STEP = {
         "same_possession": {"type": "boolean"},
         "team": {"enum": ["same", "other"]},
         "via": {"enum": ["next", "same_player"]},
+        # By default "led to" stops when the ball goes dead (a throw-in, free
+        # kick, corner, goal kick, kick-off or goalkeeper restart).
+        "through_restarts": {"type": "boolean"},
     },
     "required": ["filter"],
     # Without a time limit or the possession as a limit, "followed by" has no end.
@@ -242,7 +245,8 @@ def _next_match(g, previous, step, allowed):
     team = g.nodes[previous]["team"]
     for event, _ in following(g, previous, key=step.get("via", "next"),
                               within_s=step.get("within_s"),
-                              same_possession=step.get("same_possession", False)):
+                              same_possession=step.get("same_possession", False),
+                              stop_at_restart=not step.get("through_restarts", False)):
         if event not in allowed:
             continue
         relation = step.get("team")

@@ -37,7 +37,9 @@ A query has either "event" (conditions on single events) or "sequence" (two or m
 "team": "same" | "other", "via": "next" | "same_player"}}, ...]}}. Only later steps have within_s, \
 same_possession, team and via, and each later step needs within_s or "same_possession": true. within_s counts \
 from the previous step's event. team is relative to the previous step's team. via "same_player" follows only \
-the same player's actions.
+the same player's actions. A later step stops when the ball goes dead (a new possession from a throw-in, free \
+kick, corner, goal kick, kick-off or keeper restart) unless it has "through_restarts": true; use that only when the \
+question asks to include set pieces or restarts.
 - "matches": {{"opponent": <team name>, "venue": "home" | "away", "match_id": <id>}}, all optional.
 
 ## Fields

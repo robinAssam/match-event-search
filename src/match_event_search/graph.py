@@ -28,6 +28,8 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 
+from .tagging import OPEN_PLAY_STARTS
+
 SEASON = "season"
 NODE_ATTRIBUTES = ["match_id", "period", "t", "possession", "team", "player"]
 
@@ -114,24 +116,43 @@ def events_in(g: nx.MultiDiGraph, node) -> list:
 
 
 def following(g: nx.MultiDiGraph, event, key: str = "next", within_s: float = None,
-              same_possession: bool = False):
+              same_possession: bool = False, stop_at_restart: bool = False):
     """The events after `event` along `next` or `same_player` edges.
 
-    Stops after `within_s` seconds, or when the possession changes if
-    `same_possession` is set. Yields (event id, seconds after `event`).
+    Stops after `within_s` seconds, when the possession changes if
+    `same_possession` is set, and when the ball has been dead if
+    `stop_at_restart` is set: a later possession that starts from a throw-in,
+    free kick, corner, goal kick, kick-off or the goalkeeper's hands.
+    Yields (event id, seconds after `event`).
     """
     elapsed, node = 0.0, event
     while True:
         out = [(v, d) for _, v, k, d in g.out_edges(node, keys=True, data=True) if k == key]
         if not out:
             return
-        node, data = out[0]
+        previous, (node, data) = node, out[0]
         elapsed += data["dt"]
         if within_s is not None and elapsed > within_s:
             return
         if same_possession and g.nodes[node]["possession"] != g.nodes[event]["possession"]:
             return
+        if stop_at_restart and _restart_between(g, previous, node):
+            return
         yield node, elapsed
+
+
+def _restart_between(g: nx.MultiDiGraph, a, b) -> bool:
+    """Whether a possession after a's, up to b's, started with the ball dead.
+
+    Checks every possession in between, so it also works along same_player
+    edges, which skip other players' events.
+    """
+    match_id, first, last = g.nodes[a]["match_id"], g.nodes[a]["possession"], g.nodes[b]["possession"]
+    for number in range(first + 1, last + 1):
+        node = possession_node(match_id, number)
+        if node in g and g.nodes[node]["play_pattern"] not in OPEN_PLAY_STARTS:
+            return True
+    return False
 
 
 def season_graph() -> nx.MultiDiGraph:

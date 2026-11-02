@@ -265,11 +265,15 @@ def test_a_goal_after_the_ball_changes_team_gets_a_longer_window():
 
 
 @requires_season
-def test_the_goalkeeper_question_finds_the_dortmund_goal(season):
+def test_the_goalkeeper_question_stops_at_the_throw_in(season):
+    """Hradecky's lost pass at Dortmund (80:06) is followed by Fuellkrug's goal 19 s later, but only after the ball
+    went out for a Dortmund throw-in, so the turnover did not lead to the goal."""
     g, vocab = season
-    results = search(parse("goalkeeper pass to defender intercepted and led to conceeding goal", vocab), g)
-    assert len(results) == 1
-    assert results.iloc[0].match.startswith("2024-04-21 Borussia Dortmund") and results.iloc[0].minute == 80
+    query = parse("goalkeeper pass to defender intercepted and led to conceeding goal", vocab)
+    assert len(search(query, g)) == 0
+    query["sequence"][1]["through_restarts"] = True
+    results = search(query, g)
+    assert [(r.match[:10], r.minute) for r in results.itertuples()] == [("2024-04-21", 80)]
 
 
 @pytest.mark.parametrize("question, our_team, box", [
@@ -289,5 +293,4 @@ def test_boxes_depend_on_who_is_acting(question, our_team, box):
 @requires_season
 def test_turnovers_in_our_own_box_that_led_to_a_goal_conceded(season):
     g, vocab = season
-    results = search(parse("Turnovers in our own box that led to goal conceeded", vocab), g)
-    assert [(r.match[:10], r.minute) for r in results.itertuples()] == [("2024-04-21", 80)]
+    assert len(search(parse("Turnovers in our own box that led to goal conceeded", vocab), g)) == 0
