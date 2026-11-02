@@ -10,6 +10,7 @@ import pandas as pd
 import streamlit as st
 
 from match_event_search.graph import season_graph
+from match_event_search.llm_parser import LLMParser
 from match_event_search.plotting import plot_moment, plot_overview
 from match_event_search.query import QueryError, search
 from match_event_search.rule_parser import ParseError, Vocabulary, parse_verbose
@@ -24,6 +25,7 @@ EXAMPLES = [
     "Goalkeeper passes to a defender intercepted that led to conceding a goal",
 ]
 MAX_ROWS = 1000
+PARSERS = ["Rule-based (v1)", "LLM (v2)"]
 
 GUIDE = """
 **Build the question in this order:** *[who] [action] [where / when]* → **that led to** → *[next action]*
@@ -58,12 +60,35 @@ st.set_page_config(page_title="Match event search", page_icon=":soccer:", layout
 @st.cache_resource(show_spinner="Tagging the season and building the graph…")
 def load():
     g = season_graph()
-    return g, Vocabulary.from_tags(g.graph["tags"])
+    return g, Vocabulary.from_tags(g.graph["tags"]), LLMParser(g)
 
 
-def run_question(question, vocab, g):
-    parsed = parse_verbose(question, vocab)
-    return parsed.query, parsed.unparsed, parsed.corrected, search(parsed.query, g)
+@st.cache_resource
+def llm_answers() -> dict:
+    """Questions the LLM parser has answered, so asking again costs nothing.
+
+    Only the model's own answers are kept: a fallback (e.g. no API key yet)
+    is asked again next time.
+    """
+    return {}
+
+
+def read_question(question: str, parser: str):
+    """The query for a question, plus what to tell the user about how it was read."""
+    if parser == PARSERS[0]:
+        parsed = parse_verbose(question, vocab)
+        return parsed.query, parsed.unparsed, parsed.corrected, None
+    answers = llm_answers()
+    if question not in answers:
+        with st.spinner("Asking the model…"):
+            result = llm.parse(question)
+        if result.parser == "llm":
+            answers[question] = result
+    else:
+        result = answers[question]
+    if result.query is None:
+        raise ParseError(result.note)
+    return result.query, result.unparsed, result.corrected, result
 
 
 def use_example():
@@ -77,12 +102,11 @@ def time_label(row) -> str:
     return f"{int(row.minute)}:{int(row.second):02d}"
 
 
-g, vocab = load()
+g, vocab, llm = load()
 tags = g.graph["tags"]
 
 st.title("Match event search")
-st.caption("Bayer Leverkusen, Bundesliga 2023/24 · 34 matches · data: StatsBomb open data. "
-           "Questions are read by the rule-based parser (v1).")
+st.caption("Bayer Leverkusen, Bundesliga 2023/24 · 34 matches · data: StatsBomb open data.")
 
 if "question" not in st.session_state:
     st.session_state.question = EXAMPLES[0]
@@ -92,6 +116,10 @@ with ask:
     st.text_input("Question", key="question", label_visibility="collapsed",
                   placeholder="e.g. turnovers in our own half that led to a shot within 10 seconds")
     st.pills("Examples", EXAMPLES, label_visibility="collapsed", key="example", on_change=use_example)
+    parser = st.radio("Parser", PARSERS, horizontal=True, key="parser",
+                      help="The rule-based parser reads fixed phrases. The LLM parser sends the question to an "
+                           "Anthropic model (needs ANTHROPIC_API_KEY and LLM_MODEL) and falls back to the "
+                           "rule-based parser if it fails.")
     with st.expander("How to ask"):
         st.markdown(GUIDE)
 with write:
@@ -99,13 +127,14 @@ with write:
                        placeholder='{"event": {"action": "shot", "header": true, "our_team": true}}')
     use_json = st.toggle("Search with this JSON query instead of the question", value=False)
 
-query, unparsed, corrected, results, error = None, [], {}, None, None
+query, unparsed, corrected, llm_result, results, error = None, [], {}, None, None, None
 try:
     if use_json:
         query = json.loads(raw)
         results = search(query, g)
     elif st.session_state.question.strip():
-        query, unparsed, corrected, results = run_question(st.session_state.question, vocab, g)
+        query, unparsed, corrected, llm_result = read_question(st.session_state.question, parser)
+        results = search(query, g)
 except json.JSONDecodeError as e:
     error = f"That is not valid JSON: {e}"
 except (ParseError, QueryError) as e:
@@ -119,6 +148,12 @@ if results is None:
 
 with st.expander("Query", expanded=False):
     st.code(json.dumps(query, indent=2), language="json")
+if llm_result is not None:
+    if llm_result.parser == "llm":
+        tries = "first attempt" if llm_result.attempts == 1 else f"{llm_result.attempts} attempts"
+        st.caption(f"Read by the LLM parser ({tries}).")
+    else:
+        st.warning(f"The LLM parser was not used: {llm_result.note}. The rule-based parser answered.")
 if corrected:
     st.info("Read " + ", ".join(f"“{a}” as “{b}”" for a, b in corrected.items()))
 if unparsed:

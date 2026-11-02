@@ -1,5 +1,6 @@
 """Central configuration. Tag and query parameters will be added here in later stages."""
-from dataclasses import dataclass
+import os
+from dataclasses import dataclass, field
 from pathlib import Path
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "raw"
@@ -76,3 +77,24 @@ class TagConfig:
     transition_window_s: float = 10.0
     set_piece_window_s: float = 10.0
     time_bucket_min: int = 15
+
+
+@dataclass(frozen=True)
+class LLMConfig:
+    """The LLM question parser (parser v2, docs/methodology/06_llm_parser.md).
+
+    model: the Anthropic model id, read from the LLM_MODEL environment
+        variable (set next to ANTHROPIC_API_KEY). Without it, questions go to
+        the rule-based parser.
+    effort: how much the model reasons before answering. "medium" is enough
+        to translate a question into a small JSON query.
+    max_tokens: room for the reasoning and the answer; a query is short.
+    retries: after an invalid query, how many times the model is shown the
+        validation errors and asked to correct it before the rule-based
+        parser takes over.
+    """
+
+    model: str = field(default_factory=lambda: os.environ.get("LLM_MODEL", ""))
+    effort: str = "medium"
+    max_tokens: int = 16000
+    retries: int = 1

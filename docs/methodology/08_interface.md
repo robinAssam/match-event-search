@@ -1,10 +1,11 @@
-# 8. Interface (first version)
+# 8. Interface
 
 [`app/app.py`](../../app/app.py) is a Streamlit page over everything built so far. Run it with
 `streamlit run app/app.py`; the first load tags the season and builds the graph (about 15 s, then cached).
 
-- **Question box** with example questions, read by the rule-based parser (stage 5). Words the parser did not use
-  are shown, and the query it produced can be opened.
+- **Question box** with example questions, a "How to ask" guide, and a choice of parser: rule-based (stage 5) or
+  LLM (stage 6). The page shows which parser answered (and why the rule-based parser stepped in, if it did), typos it
+  corrected, words it did not use, and the query it produced.
 - **JSON tab**: type a query in the stage 4 format directly, for questions the parser cannot read yet.
 - **Results table**: match, half, time, players, outcome and duration of each moment, in date order (the first
   1,000 for very broad questions).
@@ -15,4 +16,4 @@
 Every event is stored from the acting team's side (stage 1), so the plots turn the opponent's events round,
 (x, y) → (120 − x, 80 − y), and show the pitch from Leverkusen's side, attacking to the right.
 
-This version comes before the LLM parser (stage 6); it will get a choice of parser once that exists.
+The LLM parser's answers are kept per question while the app runs, so asking again costs nothing.

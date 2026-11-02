@@ -25,6 +25,16 @@ streamlit run app/app.py
 Type a question or pick an example; the page shows how the question was read, the moments found, where they
 started, and the selected moment on the pitch. → [notes](docs/methodology/08_interface.md)
 
+## Questions in plain English
+Two parsers turn a question into a query: fixed rules (v1, no setup) and an Anthropic model (v2), which falls back to
+the rules when it fails. For v2, set an API key and the model id:
+```bash
+setx ANTHROPIC_API_KEY "<your key>"
+setx LLM_MODEL "<model id>"
+python scripts/ask.py --llm "goalkeeper passes to a defender that were lost and led to a goal against us"
+```
+→ [rule-based parser](docs/methodology/05_rule_parser.md), [LLM parser](docs/methodology/06_llm_parser.md)
+
 ## Data
 All 34 Bundesliga matches of Bayer Leverkusen's 2023/24 season (unbeaten: 28 wins, 6 draws), with event data and
 360 freeze-frames. → [notes](docs/methodology/01_data.md)
