@@ -42,6 +42,8 @@ Words the parser did not use are returned with the query, so a user (or the eval
 | "we / our / us", "they / their / opponents" | `our_team` true or false |
 | "own half" | the acting team's own half |
 | "our half", "their half" | depends on who acts: "our turnovers in their half" is the opponent's half, "their turnovers in their half" their own |
+| "own box", "our box", "their box" | the same for penalty areas: `in_own_box` is the box the acting team defends, `in_box` the one it attacks; "their shots in our box" is `in_box` |
+| "turnovers in our own box" | where the losing action started (a goal kick or pass from our box counts); "opponent regains in our box" is where they won the ball |
 | A later step with no team | after a turnover the other team; otherwise the same team |
 | A later step with no time limit | same team: the same possession; other team: within 15 s (`DEFAULT_WINDOW_S`), or 30 s for a goal (`DEFAULT_GOAL_WINDOW_S`) |
 | "left back" | role group FB on the left, which includes wing backs (stage 2) |

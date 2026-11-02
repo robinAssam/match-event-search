@@ -39,7 +39,7 @@ GUIDE = """
 | Actions | passes, carries, dribbles, shots, goals, crosses, through balls, switches, cutbacks, key passes, assists, headers, tackles, interceptions, clearances, blocks, aerials, fouls, pressing |
 | Derived | progressive, turnovers / lost the ball / intercepted (a pass), regains / won the ball, box entries / into the box |
 | Outcome | successful, completed, failed, incomplete; shots on target / off target / blocked |
-| Where | own half, opponent half, final / middle / defensive third, in the box, left wing, left half-space, from the left |
+| Where | own half, opponent half, final / middle / defensive third, in the box, our own box, their box, left wing, left half-space, from the left |
 | When | after the 60th minute, before the 30th minute, between the 30th and 45th minute, last 15 minutes, first / second half |
 | Situation | under pressure, not under pressure, counter attacks, transitions, build-up, set pieces, high press, low block, counterpressing, when winning / drawing / losing |
 | Set pieces | corners, free kicks, throw-ins, goal kicks, penalties; **from corners** = anything after a corner |
@@ -47,6 +47,8 @@ GUIDE = """
 
 **Good to know**
 - No team mentioned means Leverkusen; say *their*, *opponent* or *conceded* for the other team.
+- A turnover is placed where the losing action started (a pass played from our box is a turnover in our box);
+  for where the opponent won the ball, ask for *opponent regains in our box*.
 - Give sequences a time limit ("within 20 seconds"). Without one, the next step must be in the same possession,
   or within 15 s when the ball changes team (30 s when it is a goal).
 - Small typos in football words are corrected (shown above the results); names must be spelt right.

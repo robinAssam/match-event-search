@@ -270,3 +270,24 @@ def test_the_goalkeeper_question_finds_the_dortmund_goal(season):
     results = search(parse("goalkeeper pass to defender intercepted and led to conceeding goal", vocab), g)
     assert len(results) == 1
     assert results.iloc[0].match.startswith("2024-04-21 Borussia Dortmund") and results.iloc[0].minute == 80
+
+
+@pytest.mark.parametrize("question, our_team, box", [
+    ("turnovers in our own box", True, "in_own_box"),
+    ("turnovers in our box", True, "in_own_box"),
+    ("opponent turnovers in their own box", False, "in_own_box"),
+    ("their shots in our box", False, "in_box"),  # the box they attack
+    ("our shots in their box", True, "in_box"),
+    ("opponent regains in our box", False, "in_box"),
+])
+def test_boxes_depend_on_who_is_acting(question, our_team, box):
+    f = event(question)
+    assert f["our_team"] is our_team and f[box] is True
+    assert ({"in_box", "in_own_box"} - {box}).isdisjoint(f)
+
+
+@requires_season
+def test_turnovers_in_our_own_box_that_led_to_a_goal_conceded(season):
+    g, vocab = season
+    results = search(parse("Turnovers in our own box that led to goal conceeded", vocab), g)
+    assert [(r.match[:10], r.minute) for r in results.itertuples()] == [("2024-04-21", 80)]

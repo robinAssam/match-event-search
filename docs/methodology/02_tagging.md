@@ -10,7 +10,7 @@ families, the football version of the law project's 9-label schema. All threshol
 | # | Family | Columns | Source |
 |---|---|---|---|
 | 1 | Action | `action` (pass, carry, shot, tackle, aerial_duel, …); qualifiers `cross`, `through_ball`, `switch`, `cutback`, `key_pass`, `assist`, `header`; `set_piece_type`; derived `progressive`, `box_entry`, `turnover`, `regain` | StatsBomb, derived tags ours |
-| 2 | Zone | `third`, `channel`, `half`, `in_box`, plus `end_third`, `end_channel`, `end_in_box` for passes, carries and shots | ours |
+| 2 | Zone | `third`, `channel`, `half`, `in_box` (the box the acting team attacks), `in_own_box` (the box it defends), plus `end_third`, `end_channel`, `end_in_box` for passes, carries and shots | ours |
 | 3 | Phase | `phase` | ours, using StatsBomb's `play_pattern` and `counterpress` |
 | 4 | Role | `position`, `role_group` (GK, CB, FB, DM, CM, AM, W, ST), `role_side`; the same for the intended receiver of a pass: `recipient_position`, `recipient_role_group`, `recipient_role_side` | StatsBomb, grouped by us |
 | 5 | Pressure | `under_pressure`, `counterpress` | StatsBomb |

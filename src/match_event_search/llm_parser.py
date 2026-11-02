@@ -63,7 +63,7 @@ player are action "interception".
 - "From corners / free kicks / throw-ins / goal kicks" is play_pattern ("From Corner", ...): the possession \
 started that way. The corner kicks themselves are set_piece_type "corner".
 - Zones are seen from the acting team: third "attacking" is near the goal that team attacks, half "own" is its \
-own half. "Our half" is half "own" for our actions and half "opponent" for theirs.
+own half. "Our half" is half "own" for our actions and half "opponent" for theirs. In the same way, "in_box" is the penalty area the acting team attacks and "in_own_box" the one it defends: "our own box" for our actions is in_own_box, and "our box" for the opponent's actions is in_box. A turnover's location is where the losing action (e.g. the pass) started; where the opponent won the ball is their regain.
 - minute starts at 0: "after the 60th minute" is {{"gte": 60}}; "the last 15 minutes" is {{"gte": 75}}. \
 "Second half" is period 2.
 - In a sequence, a step after a turnover is by the other team ("team": "other") unless the question says whose \

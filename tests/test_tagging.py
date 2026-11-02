@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from match_event_search import loaders, tagging
-from match_event_search.tagging import (channel, half, in_box, is_progressive, progress_m, role_group,
+from match_event_search.tagging import (channel, half, in_box, in_own_box, is_progressive, progress_m, role_group,
                                         role_side, third, time_bucket)
 
 
@@ -170,3 +170,8 @@ def test_receiver_role_of_a_lost_goalkeeper_pass():
 def test_every_named_receiver_has_a_position(tagged):
     tags = tagged[1]
     assert tags.recipient_position[tags.pass_recipient.notna()].notna().all()
+
+
+def test_own_box_is_the_mirror_of_the_box_attacked():
+    assert list(in_own_box([0, 18, 18.1, 10, 10], [40, 40, 40, 17.9, 62])) == [True, True, False, False, True]
+    assert not in_box([10], [40])[0]

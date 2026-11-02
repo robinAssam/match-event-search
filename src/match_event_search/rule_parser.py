@@ -161,6 +161,16 @@ HALVES = [
 ]
 HALVES = [(re.compile(rf"\b(?:{pattern})\b"), side) for pattern, side in HALVES]
 
+# Penalty areas, the same way: "own box" is the box the acting team defends
+# (`in_own_box`); "our box" is that box only when we are acting.
+AREA = r"(?:penalty )?(?:box|area)|18 yard box"
+BOXES = [
+    (rf"(?:own|defensive) (?:{AREA})", "own"),
+    (rf"our (?:{AREA})", "ours"),
+    (rf"(?:their|the opponents?|opponents?|the opposition|opposition|the other) (?:{AREA})", "theirs"),
+]
+BOXES = [(re.compile(rf"\b(?:{pattern})\b"), side) for pattern, side in BOXES]
+
 # Words that say whose events these are.
 OURS = re.compile(r"\b(?:we|us|our|ours|leverkusen|bayer)\b")
 THEIRS = re.compile(r"\b(?:they|them|their|opponents?|opposition|the other team)\b")
@@ -396,10 +406,15 @@ def _step(text: str, vocab: Vocabulary, first: bool):
     if PASS_WORD.search(text) and INTERCEPTED.search(text):
         conditions["turnover"] = True
         text = INTERCEPTED.sub(" ", text)
-    half = None
+    half = box = None
     for pattern, side in HALVES:
         if pattern.search(text):
             half = side
+            text = pattern.sub(" ", text)
+            break
+    for pattern, side in BOXES:
+        if pattern.search(text):
+            box = side
             text = pattern.sub(" ", text)
             break
     ours, theirs = bool(OURS.search(text)), bool(THEIRS.search(text))
@@ -409,7 +424,7 @@ def _step(text: str, vocab: Vocabulary, first: bool):
                 _add(conditions, name, value)
             text = pattern.sub(" ", text)
 
-    recognised = bool(conditions) or half is not None
+    recognised = bool(conditions) or half is not None or box is not None
     if "our_team" not in conditions:
         if ours and not theirs:
             conditions["our_team"] = True
@@ -422,6 +437,10 @@ def _step(text: str, vocab: Vocabulary, first: bool):
         conditions["half"] = {"own": "own", "opponent": "opponent",
                               "ours": "own" if acting_ours else "opponent",
                               "theirs": "opponent" if acting_ours else "own"}[half]
+    if box is not None:
+        acting_ours = conditions.get("our_team", True)
+        defended = box == "own" or (box == "ours") == acting_ours
+        conditions["in_own_box" if defended else "in_box"] = True
 
     rest = [w for w in THEIRS.sub(" ", OURS.sub(" ", text)).split() if w not in STOPWORDS]
     if not recognised:

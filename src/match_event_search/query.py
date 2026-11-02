@@ -33,7 +33,7 @@ from .graph import following
 
 BOOLEAN_FIELDS = [
     "cross", "through_ball", "switch", "cutback", "key_pass", "assist", "header",
-    "progressive", "box_entry", "turnover", "regain", "in_box", "end_in_box",
+    "progressive", "box_entry", "turnover", "regain", "in_box", "in_own_box", "end_in_box",
     "under_pressure", "counterpress", "our_team", "home", "in_possession",
 ]
 NUMBER_FIELDS = [

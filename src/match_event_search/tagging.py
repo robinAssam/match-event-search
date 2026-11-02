@@ -109,9 +109,17 @@ def half(x):
 
 
 def in_box(x, y):
+    """In the penalty area the acting team attacks."""
     x, y = np.asarray(x, dtype=float), np.asarray(y, dtype=float)
     lo, hi = PITCH.box_y
     return (x >= PITCH.box_x) & (y >= lo) & (y <= hi)
+
+
+def in_own_box(x, y):
+    """In the penalty area the acting team defends (the mirror image of `in_box`)."""
+    x, y = np.asarray(x, dtype=float), np.asarray(y, dtype=float)
+    lo, hi = PITCH.box_y
+    return (x <= PITCH.length - PITCH.box_x) & (y >= lo) & (y <= hi)
 
 
 def _bins(values, edges, labels):
@@ -214,6 +222,7 @@ def tag_events(events: pd.DataFrame, match_info: pd.Series,
     # 2. Zone
     out["third"], out["channel"], out["half"] = third(out.x, config), channel(out.y, config), half(out.x)
     out["in_box"] = in_box(out.x, out.y)
+    out["in_own_box"] = in_own_box(out.x, out.y)
     out["end_third"], out["end_channel"] = third(out.end_x, config), channel(out.end_y, config)
     out["end_in_box"] = in_box(out.end_x, out.end_y)
 
