@@ -57,6 +57,26 @@ ACTION_NAMES = {
     "Foul Won": "foul_won",
 }
 
+# Values each categorical tag can take (also the vocabulary of the query schema).
+ACTIONS = [
+    "pass", "carry", "shot", "dribble", "pressure", "tackle", "aerial_duel", "interception",
+    "ball_recovery", "clearance", "block", "foul_committed", "foul_won", "miscontrol",
+    "dispossessed", "goalkeeper", "ball_receipt", "dribbled_past", "fifty_fifty", "shield",
+    "error", "offside", "own_goal_for", "own_goal_against", "referee_ball_drop", "bad_behaviour",
+    "half_start", "half_end", "starting_xi", "substitution", "tactical_shift", "injury_stoppage",
+    "player_on", "player_off",
+]
+THIRDS = ["defensive", "middle", "attacking"]
+CHANNELS = ["left_wing", "left_half_space", "centre", "right_half_space", "right_wing"]
+HALVES = ["own", "opponent"]
+PHASES = ["build_up", "progression", "final_third", "transition", "counter_attack", "set_piece",
+          "counterpress", "high_press", "mid_block", "low_block"]
+ROLE_SIDES = ["left", "centre", "right"]
+OUTCOMES = ["success", "failure"]
+GAME_STATES = ["winning", "drawing", "losing"]
+TIME_BUCKETS = ["0-15", "15-30", "30-45+", "45-60", "60-75", "75-90+", "extra_time"]
+SET_PIECE_TYPES = ["corner", "free_kick", "throw_in", "goal_kick", "kick_off", "penalty"]
+
 ROLE_GROUPS = {
     "Goalkeeper": "GK",
     "Center Back": "CB", "Left Center Back": "CB", "Right Center Back": "CB",
@@ -74,16 +94,15 @@ ROLE_GROUPS = {
 
 def third(x, config: TagConfig = TagConfig()):
     lo, hi = config.third_lines
-    return _bins(x, [lo, hi], ["defensive", "middle", "attacking"])
+    return _bins(x, [lo, hi], THIRDS)
 
 
 def channel(y, config: TagConfig = TagConfig()):
-    return _bins(y, list(config.channel_lines),
-                 ["left_wing", "left_half_space", "centre", "right_half_space", "right_wing"])
+    return _bins(y, list(config.channel_lines), CHANNELS)
 
 
 def half(x):
-    return _bins(x, [PITCH.length / 2], ["own", "opponent"])
+    return _bins(x, [PITCH.length / 2], HALVES)
 
 
 def in_box(x, y):
