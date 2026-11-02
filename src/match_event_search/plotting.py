@@ -51,9 +51,11 @@ def plot_moment(span: pd.DataFrame, steps: list, title: str = ""):
             pitch.scatter(e.x, e.y, ax=ax, marker="*", s=420 if is_step else 200, color=colour,
                           edgecolors="black", linewidths=0.6, zorder=5)
             continue
-        marker = "x" if e.action == "pressure" else "o"
-        pitch.scatter(e.x, e.y, ax=ax, s=90 if is_step else 30, marker=marker, color=colour, alpha=alpha,
-                      edgecolors="none" if marker == "x" else "white", zorder=4)
+        if e.action == "pressure":
+            pitch.scatter(e.x, e.y, ax=ax, s=90 if is_step else 30, marker="x", color=colour, alpha=alpha, zorder=4)
+        else:
+            pitch.scatter(e.x, e.y, ax=ax, s=90 if is_step else 30, marker="o", color=colour, alpha=alpha,
+                          edgecolors="white", zorder=4)
     for number, step in enumerate(steps, 1):
         if step in events.index:
             e = events.loc[step]

@@ -5,7 +5,8 @@ import pytest
 
 from match_event_search import graph, loaders
 from match_event_search.query import search
-from match_event_search.rule_parser import (DEFAULT_WINDOW_S, ParseError, Vocabulary, _aliases, normalise, parse,
+from match_event_search.rule_parser import (DEFAULT_GOAL_WINDOW_S, DEFAULT_WINDOW_S, ParseError, Vocabulary,
+                                            _aliases, _one_edit_apart, correct_spelling, normalise, parse,
                                             parse_verbose)
 
 VOCAB = Vocabulary(
@@ -211,3 +212,61 @@ def test_example_questions_find_the_same_moments_as_the_hand_written_queries(sea
     g, vocab = season
     assert len(search(parse("Progressive passes by the left back after the 60th minute", vocab), g)) == 105
     assert len(search(parse("Turnovers in our own half that led to a shot within 10 seconds", vocab), g)) == 18
+
+
+# --- Fixes after testing: defenders, receivers, "intercepted", typos, goal window ----------
+
+def test_defenders_are_centre_backs_and_full_backs():
+    assert event("passes by defenders")["role_group"] == ["CB", "FB"]
+
+
+def test_receiver_role():
+    f = event("goalkeeper passes to a defender")
+    assert f["role_group"] == "GK" and f["recipient_role_group"] == ["CB", "FB"]
+    f = event("passes to the left back")
+    assert (f["recipient_role_group"], f["recipient_role_side"]) == ("FB", "left")
+    assert "role_group" not in f
+
+
+def test_an_intercepted_pass_is_a_turnover_but_interceptions_are_an_action():
+    assert event("passes that were intercepted") == {"turnover": True, "action": "pass", "our_team": True}
+    assert event("interceptions") == {"action": "interception", "our_team": True}
+
+
+def test_conceding_forms():
+    for question in ("goals conceded", "conceding a goal", "conceded goals", "concede goals"):
+        assert event(question) == {"action": "shot", "outcome_detail": "goal", "our_team": False}
+
+
+def test_misspellings_one_letter_off_are_corrected_and_reported():
+    parsed = parse_verbose("progresive pases leading to conceeding goal", VOCAB)
+    assert parsed.corrected == {"progresive": "progressive", "pases": "passes", "conceeding": "conceding"}
+    assert parsed.query["sequence"][0]["filter"] == {"progressive": True, "action": "pass", "our_team": True}
+
+
+def test_names_and_short_words_are_not_corrected():
+    assert parse_verbose("Wirtz dribbles", VOCAB).corrected == {}
+    assert correct_spelling("shoot", protected=set()) == ("shoot", {})  # known word
+    assert correct_spelling("pas", protected=set()) == ("pas", {})  # too short to guess
+    assert correct_spelling("across", protected=set()) == ("across", {})  # first letter differs from "cross"
+
+
+def test_one_edit_apart():
+    assert _one_edit_apart("conceeding", "conceding")  # extra letter
+    assert _one_edit_apart("dribbels", "dribbles")  # swapped neighbours
+    assert _one_edit_apart("crosses", "crasses")  # changed letter
+    assert not _one_edit_apart("cross", "crosses")
+
+
+def test_a_goal_after_the_ball_changes_team_gets_a_longer_window():
+    q = parse("goalkeeper passes intercepted that led to conceding a goal", VOCAB)
+    assert q["sequence"][1] == {"filter": {"action": "shot", "outcome_detail": "goal", "our_team": False},
+                                "within_s": DEFAULT_GOAL_WINDOW_S}
+
+
+@requires_season
+def test_the_goalkeeper_question_finds_the_dortmund_goal(season):
+    g, vocab = season
+    results = search(parse("goalkeeper pass to defender intercepted and led to conceeding goal", vocab), g)
+    assert len(results) == 1
+    assert results.iloc[0].match.startswith("2024-04-21 Borussia Dortmund") and results.iloc[0].minute == 80

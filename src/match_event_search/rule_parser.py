@@ -18,20 +18,26 @@ from .query import validate
 
 # "Led to" with no time given: how long to look for the next step when the
 # possession changes (our choice; a little longer than the 10 s transition).
+# A goal gets longer: the season's one goal conceded after a lost goalkeeper
+# pass came 19 s later, after a throw-in.
 DEFAULT_WINDOW_S = 15.0
+DEFAULT_GOAL_WINDOW_S = 30.0
 
 # Phrases and the conditions they stand for, tried from top to bottom; a
 # matched phrase is removed so later phrases cannot reuse its words. Phrases
 # match whole words only. P is an optional plural ending.
 P = r"(?:e?s)?"
-LEXICON = [
-    # Roles, before sides and channels
+
+# Roles, before sides and channels. "to a <role>" uses the same phrases for
+# the receiver of a pass.
+ROLES = [
     (r"left (?:full |wing )?backs?|lwb|lb", {"role_group": "FB", "role_side": "left"}),
     (r"right (?:full |wing )?backs?|rwb|rb", {"role_group": "FB", "role_side": "right"}),
     (r"(?:full|wing) ?backs?", {"role_group": "FB"}),
     (r"left (?:centre|center) ?backs?", {"role_group": "CB", "role_side": "left"}),
     (r"right (?:centre|center) ?backs?", {"role_group": "CB", "role_side": "right"}),
     (r"(?:centre|center) ?backs?|central defenders?|cbs?", {"role_group": "CB"}),
+    (r"defenders?|back (?:three|four|five)|back line", {"role_group": ["CB", "FB"]}),
     (r"goal ?keepers?|keepers?|gks?", {"role_group": "GK"}),
     (r"(?:defensive|holding) midfielders?|number 6|no 6", {"role_group": "DM"}),
     (r"attacking midfielders?|number 10|no 10", {"role_group": "AM"}),
@@ -40,7 +46,9 @@ LEXICON = [
     (r"right wingers?", {"role_group": "W", "role_side": "right"}),
     (r"wingers?|wide players?", {"role_group": "W"}),
     (r"strikers?|(?:centre|center) forwards?|number 9|no 9", {"role_group": "ST"}),
+]
 
+LEXICON = ROLES + [
     # Derived actions
     (rf"turnovers?|(?:lost|lose|losing|loses) (?:the )?(?:ball|possession)|(?:ball|possession) loss{P}",
      {"turnover": True}),
@@ -73,9 +81,10 @@ LEXICON = [
     (r"shots? on target", {"action": "shot", "outcome_detail": ["goal", "on_target"]}),
     (r"shots? off target", {"action": "shot", "outcome_detail": "off_target"}),
     (r"blocked shots?|shots? (?:that were |was )?blocked", {"action": "shot", "outcome_detail": "blocked"}),
-    (r"goals? conceded|conceded (?:a )?goals?|goals? against us",
+    (r"goals? conceded|conced(?:e|es|ed|ing) (?:a |the )?goals?|goals? against us|let in (?:a )?goals?",
      {"action": "shot", "outcome_detail": "goal", "our_team": False}),
-    (r"shots? conceded|conceded (?:a )?shots?|shots? against us", {"action": "shot", "our_team": False}),
+    (r"shots? conceded|conced(?:e|es|ed|ing) (?:a |the )?shots?|shots? against us",
+     {"action": "shot", "our_team": False}),
     (r"attempts? on goal|shots? at goal", {"action": "shot"}),
     (r"goals?|scored|scores?", {"action": "shot", "outcome_detail": "goal"}),
     (r"shots?|shooting|shoot|attempts?", {"action": "shot"}),
@@ -132,6 +141,15 @@ LEXICON = [
     (r"drawing|level|tied|all square", {"game_state": "drawing"}),
 ]
 LEXICON = [(re.compile(rf"\b(?:{pattern})\b"), values) for pattern, values in LEXICON]
+
+# "Passes to a defender": the role of the intended receiver.
+RECEIVER_ROLES = [(re.compile(rf"\b(?:to|for|towards) (?:a |an |the |our |their )?(?:{pattern})\b"),
+                   {f"recipient_{name}": value for name, value in values.items()}) for pattern, values in ROLES]
+
+# A pass that was "intercepted" or "cut out" was lost to the other team; on its
+# own, "interceptions" are the defending team's action.
+INTERCEPTED = re.compile(r"\b(?:was |were |got |gets |being |is )?(?:intercepted|cut out|picked off)\b")
+PASS_WORD = re.compile(r"\bpass(?:es|ing)?\b")
 
 # Halves, named from the acting team's side ("own"), or as ours or theirs:
 # "our half" is the acting team's own half only when we are acting.
@@ -208,6 +226,54 @@ class ParseError(ValueError):
 class Parse:
     query: dict
     unparsed: list  # words the parser did not use
+    corrected: dict = field(default_factory=dict)  # misspelt word -> word it was read as
+
+
+# Correctly spelt words of the lexicon, for reading misspellings ("conceeding").
+KNOWN_WORDS = set("""goalkeeper goalkeepers keeper keepers defender defenders centre center central midfielder
+midfielders winger wingers striker strikers forward forwards turnover turnovers possession regain regains
+recovered progressive entry entries corner corners throw penalty penalties through switch switches cutback
+cutbacks cross crosses crossed assist assists header headers headed target blocked conceded conceding concede
+concedes against attempt attempts goals scored scores shots shooting counter counters attack attacks
+counterpress counterpressing gegenpressing pressing presses pressure pressured unpressured transition
+transitions build pieces plays successful unsuccessful completed complete failed incomplete inaccurate accurate
+passes passing carries carried dribble dribbles dribbling tackle tackles tackling interception interceptions
+intercepted recovery recoveries clearance clearances cleared blocks aerial aerials duels fouls fouled suffered
+miscontrol miscontrols dispossessed final attacking middle midfield defensive third space spaces flank
+touchline right winning leading ahead front losing behind trailing drawing level square minute minutes second
+seconds within between before after first opponent opponents opposition against versus followed leading
+resulting""".split())
+MIN_TYPO_LENGTH = 5
+
+
+def _one_edit_apart(a: str, b: str) -> bool:
+    """True if b is a with one letter inserted, deleted, changed, or two neighbours swapped."""
+    if a == b or abs(len(a) - len(b)) > 1:
+        return False
+    if len(a) == len(b):
+        diff = [i for i in range(len(a)) if a[i] != b[i]]
+        return len(diff) == 1 or (len(diff) == 2 and diff[1] == diff[0] + 1
+                                  and a[diff[0]] == b[diff[1]] and a[diff[1]] == b[diff[0]])
+    short, long = (a, b) if len(a) < len(b) else (b, a)
+    i = next((i for i in range(len(short)) if short[i] != long[i]), len(short))
+    return short[i:] == long[i + 1:]
+
+
+def correct_spelling(text: str, protected: set) -> tuple[str, dict]:
+    """Replace words one edit away from exactly one known word; names are left alone.
+
+    The first letter must match: typos rarely change it, and it keeps ordinary
+    words such as "across" from becoming "cross".
+    """
+    corrected = {}
+    words = text.split()
+    for i, word in enumerate(words):
+        if len(word) < MIN_TYPO_LENGTH or word in KNOWN_WORDS or word in STOPWORDS or word in protected:
+            continue
+        candidates = [k for k in KNOWN_WORDS if k[0] == word[0] and _one_edit_apart(word, k)]
+        if len(candidates) == 1:
+            corrected[word] = words[i] = candidates[0]
+    return " ".join(words), corrected
 
 
 UNITS = ("zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen "
@@ -257,7 +323,9 @@ def parse(question: str, vocab: Vocabulary) -> dict:
 
 
 def parse_verbose(question: str, vocab: Vocabulary) -> Parse:
-    text, scope = _scope(normalise(question), vocab)
+    names = {w for alias in (*vocab.players, *vocab.teams) for w in alias.split()}
+    text, corrected = correct_spelling(normalise(question), protected=names)
+    text, scope = _scope(text, vocab)
     parts = [p.strip() for p in CONNECTORS.split(text) if p and p.strip()]
     if not parts:
         raise ParseError("empty question")
@@ -275,7 +343,7 @@ def parse_verbose(question: str, vocab: Vocabulary) -> Parse:
     if scope:
         query["matches"] = scope
     validate(query)
-    return Parse(query=query, unparsed=unparsed)
+    return Parse(query=query, unparsed=unparsed, corrected=corrected)
 
 
 def _scope(text: str, vocab: Vocabulary):
@@ -319,6 +387,15 @@ def _step(text: str, vocab: Vocabulary, first: bool):
 
     text = _time(text, conditions)
     text = _names(text, vocab, conditions)
+    for pattern, values in RECEIVER_ROLES:
+        if pattern.search(text):
+            for name, value in values.items():
+                _add(conditions, name, value)
+            text = pattern.sub(" ", text)
+            break
+    if PASS_WORD.search(text) and INTERCEPTED.search(text):
+        conditions["turnover"] = True
+        text = INTERCEPTED.sub(" ", text)
     half = None
     for pattern, side in HALVES:
         if pattern.search(text):
@@ -415,5 +492,7 @@ def _relate(steps: list):
         if "within_s" not in step and not step.get("same_possession"):
             if step.get("team") == "same":
                 step["same_possession"] = True
+            elif f.get("outcome_detail") == "goal":
+                step["within_s"] = DEFAULT_GOAL_WINDOW_S
             else:
                 step["within_s"] = DEFAULT_WINDOW_S

@@ -21,8 +21,36 @@ EXAMPLES = [
     "Wirtz's dribbles in the box",
     "Crosses from the right followed by a headed shot",
     "Shots conceded from corners",
+    "Goalkeeper passes to a defender intercepted that led to conceding a goal",
 ]
 MAX_ROWS = 1000
+
+GUIDE = """
+**Build the question in this order:** *[who] [action] [where / when]* → **that led to** → *[next action]*
+*[within N seconds]*. Steps are split at "led to", "followed by", "resulting in" and "then".
+
+| You want | Write |
+|---|---|
+| Players | surname or full name: Wirtz, Grimaldo, Hincapié |
+| Roles | goalkeeper, defenders, centre backs, left / right back (wing backs included), full backs, defensive midfielders, midfielders, wingers, striker |
+| Receiver | passes **to** a defender, **to** the left back, **to** Boniface |
+| Actions | passes, carries, dribbles, shots, goals, crosses, through balls, switches, cutbacks, key passes, assists, headers, tackles, interceptions, clearances, blocks, aerials, fouls, pressing |
+| Derived | progressive, turnovers / lost the ball / intercepted (a pass), regains / won the ball, box entries / into the box |
+| Outcome | successful, completed, failed, incomplete; shots on target / off target / blocked |
+| Where | own half, opponent half, final / middle / defensive third, in the box, left wing, left half-space, from the left |
+| When | after the 60th minute, before the 30th minute, between the 30th and 45th minute, last 15 minutes, first / second half |
+| Situation | under pressure, not under pressure, counter attacks, transitions, build-up, set pieces, high press, low block, counterpressing, when winning / drawing / losing |
+| Set pieces | corners, free kicks, throw-ins, goal kicks, penalties; **from corners** = anything after a corner |
+| Opponent | goals conceded, shots conceded, their shots, against Bayern, at home, away |
+
+**Good to know**
+- No team mentioned means Leverkusen; say *their*, *opponent* or *conceded* for the other team.
+- Give sequences a time limit ("within 20 seconds"). Without one, the next step must be in the same possession,
+  or within 15 s when the ball changes team (30 s when it is a goal).
+- Small typos in football words are corrected (shown above the results); names must be spelt right.
+- Not supported yet: "or" between different things, negation (apart from "not under pressure"), score lines.
+- Check **Query** to see how the question was read. If it cannot be phrased, write the query in the JSON tab.
+"""
 
 st.set_page_config(page_title="Match event search", page_icon=":soccer:", layout="wide")
 
@@ -35,7 +63,7 @@ def load():
 
 def run_question(question, vocab, g):
     parsed = parse_verbose(question, vocab)
-    return parsed.query, parsed.unparsed, search(parsed.query, g)
+    return parsed.query, parsed.unparsed, parsed.corrected, search(parsed.query, g)
 
 
 def use_example():
@@ -64,18 +92,20 @@ with ask:
     st.text_input("Question", key="question", label_visibility="collapsed",
                   placeholder="e.g. turnovers in our own half that led to a shot within 10 seconds")
     st.pills("Examples", EXAMPLES, label_visibility="collapsed", key="example", on_change=use_example)
+    with st.expander("How to ask"):
+        st.markdown(GUIDE)
 with write:
     raw = st.text_area("JSON query", height=160, key="raw_query",
                        placeholder='{"event": {"action": "shot", "header": true, "our_team": true}}')
     use_json = st.toggle("Search with this JSON query instead of the question", value=False)
 
-query, unparsed, results, error = None, [], None, None
+query, unparsed, corrected, results, error = None, [], {}, None, None
 try:
     if use_json:
         query = json.loads(raw)
         results = search(query, g)
     elif st.session_state.question.strip():
-        query, unparsed, results = run_question(st.session_state.question, vocab, g)
+        query, unparsed, corrected, results = run_question(st.session_state.question, vocab, g)
 except json.JSONDecodeError as e:
     error = f"That is not valid JSON: {e}"
 except (ParseError, QueryError) as e:
@@ -89,10 +119,12 @@ if results is None:
 
 with st.expander("Query", expanded=False):
     st.code(json.dumps(query, indent=2), language="json")
+if corrected:
+    st.info("Read " + ", ".join(f"“{a}” as “{b}”" for a, b in corrected.items()))
 if unparsed:
     st.warning("Words the parser did not use: " + ", ".join(unparsed))
 
-st.subheader(f"{len(results):,} moments")
+st.subheader(f"{len(results):,} moment{'' if len(results) == 1 else 's'}")
 if results.empty:
     st.info("Nothing matches this question. Open the query above to see how it was read.")
     st.stop()
@@ -108,7 +140,7 @@ table = pd.DataFrame({
     "Outcome": shown.outcome,
     "Duration (s)": shown.duration_s,
 })
-selection = st.dataframe(table, hide_index=True, use_container_width=True, height=320,
+selection = st.dataframe(table, hide_index=True, width="stretch", height=320,
                          on_select="rerun", selection_mode="single-row", key="results")
 rows = selection.selection.rows
 chosen = shown.iloc[rows[0] if rows else 0]
@@ -133,4 +165,4 @@ with right:
         "Player": events.player,
         "Action": events.action,
         "Outcome": events.outcome_detail.fillna(events.outcome).fillna(""),
-    }), hide_index=True, use_container_width=True, height=240)
+    }), hide_index=True, width="stretch", height=240)

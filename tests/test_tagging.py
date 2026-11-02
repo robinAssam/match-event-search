@@ -156,3 +156,17 @@ def test_every_located_event_has_one_phase(tagged):
 def test_only_passes_and_carries_are_progressive(tagged):
     tags = tagged[1]
     assert set(tags.action[tags.progressive]) <= {"pass", "carry"}
+
+
+@requires_match
+def test_receiver_role_of_a_lost_goalkeeper_pass():
+    tags = tagging.tag_match(3895309)  # Borussia Dortmund 1-1 Leverkusen
+    pass_ = event(tags, "Lukáš Hrádecký", "Pass", 80, 6)
+    assert pass_.pass_recipient == "Josip Stanišić" and pass_.outcome == "failure"
+    assert (pass_.recipient_role_group, pass_.recipient_role_side) == ("FB", "right")
+
+
+@requires_data
+def test_every_named_receiver_has_a_position(tagged):
+    tags = tagged[1]
+    assert tags.recipient_position[tags.pass_recipient.notna()].notna().all()

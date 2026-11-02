@@ -221,6 +221,9 @@ def tag_events(events: pd.DataFrame, match_info: pd.Series,
     out["position"] = ev.position
     out["role_group"] = ev.position.map(role_group)
     out["role_side"] = ev.position.map(role_side)
+    out["recipient_position"] = _recipient_positions(out)
+    out["recipient_role_group"] = out.recipient_position.map(role_group)
+    out["recipient_role_side"] = out.recipient_position.map(role_side)
 
     # 5. Pressure
     out["under_pressure"] = ev.under_pressure.eq(True)
@@ -246,6 +249,27 @@ def tag_events(events: pd.DataFrame, match_info: pd.Series,
     # 3. Phase (needs regains)
     out["phase"] = _phases(out, config)
     return out
+
+
+def _recipient_positions(out: pd.DataFrame) -> pd.Series:
+    """The position of each pass's intended receiver at that moment in the match.
+
+    StatsBomb names the receiver (also of most failed passes) but not their
+    position, so it is taken from the receiver's latest event before the pass,
+    or their first event after it if they had none yet. This follows tactical
+    changes during the match.
+    """
+    played = out[out.player.notna() & out.position.notna()][["index", "player", "position"]]
+    passes = out[out.pass_recipient.notna()][["index", "pass_recipient"]].rename(columns={"pass_recipient": "player"})
+    if passes.empty or played.empty:
+        return pd.Series(None, index=out.index, dtype=object)
+    found = {}
+    for direction in ("backward", "forward"):
+        match = pd.merge_asof(passes.reset_index(), played.sort_values("index"), on="index", by="player",
+                              direction=direction, allow_exact_matches=False).set_index("level_0")
+        for i, position in match.position.dropna().items():
+            found.setdefault(i, position)
+    return pd.Series(found, index=out.index, dtype=object)
 
 
 def _seconds(timestamp: str) -> float:

@@ -14,7 +14,7 @@ A query has either `event` (a filter on single events) or `sequence` (two or mor
 | Field type | Fields | Write |
 |---|---|---|
 | true / false | `progressive`, `turnover`, `regain`, `box_entry`, `cross`, `header`, `in_box`, `under_pressure`, `our_team`, `home`, … | `"progressive": true` |
-| one of a fixed list | `action`, `third`, `channel`, `half`, `phase`, `role_group`, `role_side`, `position`, `outcome`, `game_state`, `time_bucket`, `set_piece_type`, `end_third`, `end_channel` | `"third": "attacking"` or `"third": ["middle", "attacking"]` |
+| one of a fixed list | `action`, `third`, `channel`, `half`, `phase`, `role_group`, `role_side`, `position`, `recipient_role_group`, `recipient_role_side`, `recipient_position`, `outcome`, `game_state`, `time_bucket`, `set_piece_type`, `play_pattern`, `end_third`, `end_channel` | `"third": "attacking"` or `"third": ["middle", "attacking"]` |
 | number | `minute`, `period`, `since_regain`, `goal_diff`, `xg`, `x`, `y`, … | `"minute": 60`, `[60, 61]` or `{"gte": 60}` (also `gt`, `lte`, `lt`) |
 | name | `player`, `pass_recipient`, `team`, `outcome_detail` | `"player": "Florian Wirtz"` |
 

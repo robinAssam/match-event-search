@@ -12,7 +12,7 @@ families, the football version of the law project's 9-label schema. All threshol
 | 1 | Action | `action` (pass, carry, shot, tackle, aerial_duel, …); qualifiers `cross`, `through_ball`, `switch`, `cutback`, `key_pass`, `assist`, `header`; `set_piece_type`; derived `progressive`, `box_entry`, `turnover`, `regain` | StatsBomb, derived tags ours |
 | 2 | Zone | `third`, `channel`, `half`, `in_box`, plus `end_third`, `end_channel`, `end_in_box` for passes, carries and shots | ours |
 | 3 | Phase | `phase` | ours, using StatsBomb's `play_pattern` and `counterpress` |
-| 4 | Role | `position`, `role_group` (GK, CB, FB, DM, CM, AM, W, ST), `role_side` | StatsBomb, grouped by us |
+| 4 | Role | `position`, `role_group` (GK, CB, FB, DM, CM, AM, W, ST), `role_side`; the same for the intended receiver of a pass: `recipient_position`, `recipient_role_group`, `recipient_role_side` | StatsBomb, grouped by us |
 | 5 | Pressure | `under_pressure`, `counterpress` | StatsBomb |
 | 6 | Outcome | `outcome` (success / failure / none), `outcome_detail` | StatsBomb, unified by us |
 | 7 | Game state | `goals_for`, `goals_against`, `goal_diff`, `game_state` (winning / drawing / losing) | rebuilt from goals |
@@ -27,6 +27,11 @@ pitch, as in the pitch-control project.
 
 **Roles.** `FB` includes wing backs. Leverkusen played with a back three, so their left-sided defender is recorded
 as *Left Wing Back* 6,660 times and as *Left Back* only 551 times; "the left back" should find both.
+
+**Receiver's role.** StatsBomb names the intended receiver of a pass, also of most failed passes (134 of Leverkusen's
+164 failed goalkeeper passes), but not their position. It is taken from the receiver's latest event before the pass in
+that match (or their first one after it), which follows tactical changes; every named receiver gets one. This makes
+"goalkeeper passes to a defender" possible.
 
 **Outcomes.** A pass with no StatsBomb outcome was completed. A shot succeeds only if it is a goal (`outcome_detail`
 says on target, off target or blocked). An aerial duel is only recorded for the player who lost it, so it is always a
