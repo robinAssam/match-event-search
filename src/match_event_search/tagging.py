@@ -76,6 +76,9 @@ OUTCOMES = ["success", "failure"]
 GAME_STATES = ["winning", "drawing", "losing"]
 TIME_BUCKETS = ["0-15", "15-30", "30-45+", "45-60", "60-75", "75-90+", "extra_time"]
 SET_PIECE_TYPES = ["corner", "free_kick", "throw_in", "goal_kick", "kick_off", "penalty"]
+# StatsBomb's play patterns: how the possession started.
+PLAY_PATTERNS = ["Regular Play", "From Counter", "From Corner", "From Free Kick", "From Throw In",
+                 "From Goal Kick", "From Keeper", "From Kick Off", "Other"]
 
 ROLE_GROUPS = {
     "Goalkeeper": "GK",

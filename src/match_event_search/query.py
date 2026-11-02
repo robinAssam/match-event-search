@@ -43,6 +43,7 @@ NUMBER_FIELDS = [
 ENUM_FIELDS = {
     "action": tagging.ACTIONS,
     "set_piece_type": tagging.SET_PIECE_TYPES,
+    "play_pattern": tagging.PLAY_PATTERNS,
     "third": tagging.THIRDS, "end_third": tagging.THIRDS,
     "channel": tagging.CHANNELS, "end_channel": tagging.CHANNELS,
     "half": tagging.HALVES,
