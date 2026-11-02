@@ -1,6 +1,6 @@
 statsbombpy>=1.13
 numpy>=2.1
-pandas>=2.2
+pandas>=2.2,<3  # 3.x compiled files are blocked by Windows Smart App Control; 2.3.3 loads
 networkx>=3.4
 jsonschema>=4.23
 matplotlib>=3.9
