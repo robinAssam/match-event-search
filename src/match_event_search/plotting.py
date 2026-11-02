@@ -30,14 +30,27 @@ def _pitch():
     return Pitch(pitch_type="statsbomb", line_color="#9a9a9a", pitch_color="white", linewidth=1, line_zorder=1)
 
 
-def plot_moment(span: pd.DataFrame, steps: list, title: str = ""):
-    """One result: every event from the first step to the last, the steps numbered."""
-    events = our_view(span[~span.action.isin(SKIP) & span.x.notna()])
+def moment_events(span: pd.DataFrame) -> pd.DataFrame:
+    """The events of a moment that are drawn, in order (ball receipts are the ends of passes)."""
+    return span[~span.action.isin(SKIP) & span.x.notna()]
+
+
+def plot_moment(span: pd.DataFrame, steps: list, title: str = "", upto: int | None = None):
+    """One result: every event from the first step to the last, the steps numbered.
+
+    With `upto`, only the first `upto` drawn events are shown and the last of
+    them is highlighted, so the move can be followed event by event.
+    """
+    events = our_view(moment_events(span))
+    current = None
+    if upto is not None:
+        events = events.iloc[:upto]
+        current = events.index[-1]
     pitch = _pitch()
     fig, ax = pitch.draw(figsize=(9, 6))
     for e in events.itertuples():
         colour = OUR_COLOUR if e.our_team else THEIR_COLOUR
-        is_step = e.Index in steps
+        is_step = e.Index in steps if current is None else e.Index == current
         alpha, width = (1.0, 2.2) if is_step else (0.45, 1.2)
         has_end = not np.isnan(e.end_x)
         if e.action == "pass" and has_end:
@@ -61,6 +74,10 @@ def plot_moment(span: pd.DataFrame, steps: list, title: str = ""):
             e = events.loc[step]
             pitch.annotate(str(number), (e.x, e.y), xytext=(e.x + 1.8, e.y - 2.4), ax=ax, fontsize=11,
                            fontweight="bold", color="black", zorder=6)
+    if current is not None:
+        e = events.loc[current]
+        pitch.scatter(e.x, e.y, ax=ax, s=380, marker="o", facecolors="none", edgecolors="#1D9E75",
+                      linewidths=2, zorder=7)
     ax.set_title(title, fontsize=11)
     _legend(ax)
     return fig

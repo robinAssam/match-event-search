@@ -44,3 +44,23 @@ def test_the_llm_parser_without_a_model_falls_back_and_says_so(app):
     assert not app.exception
     assert app.subheader[0].value == "1 moment"
     assert "The LLM parser was not used: no model configured" in app.warning[0].value
+
+
+def test_stepping_through_a_moment(app):
+    app.radio(key="parser").set_value("Rule-based (v1)").run()
+    app.text_input(key="question").set_value("Turnovers in our own box that led to goal conceeded").run()
+    assert app.session_state.frame == 10  # a new moment opens on the whole move
+    press = lambda label: next(b for b in app.button if b.label == label).click().run()
+    press("⏮ Start")
+    assert app.session_state.frame == 1
+    assert any("Lukáš Hrádecký · pass" in m.value and "step 1 of the question" in m.value for m in app.markdown)
+    assert any(":green-badge[turnover]" in m.value for m in app.markdown)
+    press("Next ▶")
+    assert app.session_state.frame == 2
+    assert any("Marcel Sabitzer · pass" in m.value for m in app.markdown)
+    press("◀ Back")
+    press("◀ Back")  # cannot go before the first event
+    assert app.session_state.frame == 1
+    press("End ⏭")
+    assert app.session_state.frame == 10
+    assert any("Niclas Füllkrug · shot" in m.value and "step 2 of the question" in m.value for m in app.markdown)

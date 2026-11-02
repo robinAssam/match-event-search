@@ -11,7 +11,12 @@
   1,000 for very broad questions).
 - **Two pitch plots** ([`plotting.py`](../../src/match_event_search/plotting.py), mplsoccer): where all the
   moments started, and the selected moment with every event from its first to its last step, the steps numbered.
-  Below it, the list of those events.
+- **Step through a moment**: Start / Back / Next / End and a slider redraw the selected moment up to one event,
+  with earlier events faded and the current one circled. A card under the pitch describes that event in plain
+  words ([`describe.py`](../../src/match_event_search/describe.py)): zone, phase, outcome, who a pass was meant for,
+  pressure, game state, seconds since the regain, and each derived tag with the reason it applies (e.g.
+  "progressive: 20.6 m closer to goal; 10 m needed"). It also says which step of the question the event is. A new
+  moment opens on the whole move; the full event list is one click away.
 
 Every event is stored from the acting team's side (stage 1), so the plots turn the opponent's events round,
 (x, y) → (120 − x, 80 − y), and show the pitch from Leverkusen's side, attacking to the right.

@@ -29,3 +29,10 @@ def test_plots_draw():
     for fig in (plot_moment(span, ["werner", "frimpong"], title="Opening goal"), plot_overview(span)):
         assert fig.axes
         plt.close(fig)
+
+
+def test_a_moment_can_be_drawn_up_to_an_event():
+    span = toy_span()
+    fig = plot_moment(span, ["werner", "frimpong"], upto=2)
+    assert fig.axes
+    plt.close(fig)

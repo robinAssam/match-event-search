@@ -11,7 +11,8 @@ import streamlit as st
 
 from match_event_search.graph import season_graph
 from match_event_search.llm_parser import LLMParser
-from match_event_search.plotting import plot_moment, plot_overview
+from match_event_search import describe
+from match_event_search.plotting import moment_events, plot_moment, plot_overview
 from match_event_search.query import QueryError, search
 from match_event_search.rule_parser import ParseError, Vocabulary, parse_verbose
 
@@ -185,21 +186,49 @@ chosen = shown.iloc[rows[0] if rows else 0]
 left, right = st.columns(2)
 with left:
     first_steps = tags.loc[[s[0] for s in results.steps]]
-    fig = plot_overview(first_steps, title=f"Where the {len(results):,} moments started (our attack →)")
+    fig = plot_overview(first_steps, title=f"Where the {len(results):,} moment{'' if len(results) == 1 else 's'} started (our attack →)")
     st.pyplot(fig)
     plt.close(fig)
 with right:
     span = tags.loc[chosen.span]
-    title = f"{chosen.match}, {time_label(chosen)} (our attack →)"
-    fig = plot_moment(span, list(chosen.steps), title=title)
+    events = moment_events(span)
+    n = len(events)
+    # A new moment opens on the whole move; the buttons and slider step through it.
+    moment_key = "|".join(chosen.steps)
+    if st.session_state.get("moment") != moment_key:
+        st.session_state.moment = moment_key
+        st.session_state.frame = n
+
+    def go_to(frame):
+        st.session_state.frame = max(1, min(n, frame))
+
+    if n > 1:
+        start, back, forward, whole = st.columns(4)
+        start.button("⏮ Start", on_click=go_to, args=(1,), width="stretch")
+        back.button("◀ Back", on_click=lambda: go_to(st.session_state.frame - 1), width="stretch")
+        forward.button("Next ▶", on_click=lambda: go_to(st.session_state.frame + 1), width="stretch")
+        whole.button("End ⏭", on_click=go_to, args=(n,), width="stretch")
+        st.slider("Event", 1, n, key="frame", label_visibility="collapsed")
+    frame = st.session_state.frame if n > 1 else 1
+    title = f"{chosen.match}, {time_label(chosen)} · event {frame} of {n} (our attack →)"
+    fig = plot_moment(span, list(chosen.steps), title=title, upto=frame)
     st.pyplot(fig)
     plt.close(fig)
-    events = span[~span.action.eq("ball_receipt")]
-    st.dataframe(pd.DataFrame({
-        "Step": ["●" if e in chosen.steps else "" for e in events.index],
-        "Time": [time_label(r) for r in events.itertuples()],
-        "Team": events.team,
-        "Player": events.player,
-        "Action": events.action,
-        "Outcome": events.outcome_detail.fillna(events.outcome).fillna(""),
-    }), hide_index=True, width="stretch", height=240)
+
+    current = events.iloc[frame - 1]
+    step = list(chosen.steps).index(current.name) + 1 if current.name in chosen.steps else None
+    st.markdown(f"**{describe.headline(current)}**" + (f" · step {step} of the question" if step else ""))
+    st.markdown("  \n".join(f"{label}: {text}" for label, text in describe.facts(current)))
+    for tag, why in describe.tags(current):
+        st.markdown(f":green-badge[{tag}] {why}")
+
+    with st.expander("All events of this moment"):
+        st.dataframe(pd.DataFrame({
+            "#": range(1, n + 1),
+            "Step": ["●" if e in chosen.steps else "" for e in events.index],
+            "Time": [time_label(r) for r in events.itertuples()],
+            "Team": events.team,
+            "Player": events.player,
+            "Action": events.action,
+            "Outcome": events.outcome_detail.fillna(events.outcome).fillna(""),
+        }), hide_index=True, width="stretch", height=240)
