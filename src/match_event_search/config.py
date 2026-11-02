@@ -20,3 +20,59 @@ class DataConfig:
     competition_id: int = 9
     season_id: int = 281
     focus_team: str = "Bayer Leverkusen"
+
+
+@dataclass(frozen=True)
+class PitchConfig:
+    """StatsBomb pitch coordinates and their size in metres.
+
+    StatsBomb records every location on a 120 x 80 grid with the acting team
+    attacking towards x = 120, and y = 0 on that team's left (StatsBomb Open
+    Data Events specification v4; checked in the data: Left Backs average
+    y = 13.5, Right Backs y = 67.2). The grid is the same whatever the real
+    pitch size, so distances in metres assume FIFA's recommended 105 x 68 m,
+    the same size as in spearman-pitch-control.
+
+    box_x, box_y: the penalty area, x >= 102 and 18 <= y <= 62 (StatsBomb
+        specification, pitch diagram).
+    """
+
+    length: float = 120.0
+    width: float = 80.0
+    length_m: float = 105.0
+    width_m: float = 68.0
+    box_x: float = 102.0
+    box_y: tuple[float, float] = (18.0, 62.0)
+
+
+@dataclass(frozen=True)
+class TagConfig:
+    """Parameters of the tag schema (docs/methodology/02_tagging.md).
+
+    third_lines: x where the defensive, middle and attacking thirds meet;
+        three equal thirds of the 120-unit pitch.
+    channel_lines: y where the five channels meet: left wing, left half-space,
+        centre, right half-space, right wing. The lines are the sides of the
+        penalty area (18, 62) and of the six-yard box (30, 50), the usual
+        markings for half-spaces.
+    progressive_m: how much closer to the centre of the opponent's goal (m) a
+        pass or carry must end, for start and end both in the own half,
+        in different halves, and both in the opponent's half. Wyscout's
+        definitions of a progressive pass and a progressive run
+        (dataglossary.wyscout.com/progressive_pass, /progressive_run).
+    transition_window_s: an in-possession event is in transition when it is
+        at most this long after the team won the ball in open play. Our
+        choice; it matches the analyst's question "led to a shot within 10
+        seconds".
+    set_piece_window_s: events up to this long after a corner, or a free kick
+        taken in the attacking third, belong to the set piece. Our choice,
+        the same window as for transitions.
+    time_bucket_min: length of the time windows within each half (minutes).
+    """
+
+    third_lines: tuple[float, float] = (40.0, 80.0)
+    channel_lines: tuple[float, float, float, float] = (18.0, 30.0, 50.0, 62.0)
+    progressive_m: tuple[float, float, float] = (30.0, 15.0, 10.0)
+    transition_window_s: float = 10.0
+    set_piece_window_s: float = 10.0
+    time_bucket_min: int = 15
