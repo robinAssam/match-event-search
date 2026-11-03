@@ -8,4 +8,5 @@ Short explanations of each step of the project. Notes are added as each stage is
 4. [Query format and engine](04_query.md): the JSON format, the decisions behind it, validation and how sequences are found
 5. [Rule-based parser](05_rule_parser.md): how a question becomes a query, the rules beyond vocabulary, and known limits
 6. [LLM parser](06_llm_parser.md): what the model gets, checks, retry and fallback to the rule-based parser
+7. [Evaluation](07_evaluation.md): the question set, scoring, results and what the rule-based parser gets wrong
 8. [Interface](08_interface.md): the Streamlit page

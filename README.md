@@ -35,6 +35,19 @@ python scripts/ask.py --llm "goalkeeper passes to a defender that were lost and 
 ```
 → [rule-based parser](docs/methodology/05_rule_parser.md), [LLM parser](docs/methodology/06_llm_parser.md)
 
+## Evaluation
+31 questions with expected queries, written and approved before either parser saw them. A parser is correct when its
+query finds exactly the same moments as the expected one. → [notes](docs/methodology/07_evaluation.md)
+
+| Parser | Correct | Exact query |
+|---|---|---|
+| Rule-based (v1, baseline) | 19 / 31 (61%) | 17 / 31 (55%) |
+| LLM (v2) | not run yet | |
+| LLM with fallback to v1 | not run yet | |
+
+Every wrong v1 answer came with a "words not used" warning (12 of 12), against 1 of the 19 correct ones. To score the
+LLM parser, run `python scripts/evaluate.py --llm` with your own API key.
+
 ## Data
 All 34 Bundesliga matches of Bayer Leverkusen's 2023/24 season (unbeaten: 28 wins, 6 draws), with event data and
 360 freeze-frames. → [notes](docs/methodology/01_data.md)
