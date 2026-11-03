@@ -31,8 +31,10 @@ So the LLM parser is never worse at producing *a* valid query than v1; whether i
 what stage 7 measures.
 
 ## Setup
-The model needs an Anthropic API key and the model id, set as environment variables on your machine (not in the
-repository):
+The LLM parser uses the API key of whoever runs the code, and requests are billed to that account. No key is part of
+the repository, and the app has no field to enter one: to use the LLM parser, run the code on your own machine with
+your own Anthropic API key and the model id set as environment variables (never in a file you commit; `.env` files
+are ignored by git, and a test fails if a key is ever tracked):
 
 ```bash
 setx ANTHROPIC_API_KEY "<your key>"

@@ -122,8 +122,9 @@ with ask:
     st.pills("Examples", EXAMPLES, label_visibility="collapsed", key="example", on_change=use_example)
     parser = st.radio("Parser", PARSERS, horizontal=True, key="parser",
                       help="The rule-based parser reads fixed phrases. The LLM parser sends the question to an "
-                           "Anthropic model (needs ANTHROPIC_API_KEY and LLM_MODEL) and falls back to the "
-                           "rule-based parser if it fails.")
+                           "Anthropic model and falls back to the rule-based parser if it fails. It uses the API "
+                           "key of whoever runs the app: set your own ANTHROPIC_API_KEY and LLM_MODEL on your "
+                           "machine before starting it.")
     with st.expander("How to ask"):
         st.markdown(GUIDE)
 with write:

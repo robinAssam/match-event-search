@@ -27,7 +27,7 @@ started, and the selected moment on the pitch. → [notes](docs/methodology/08_i
 
 ## Questions in plain English
 Two parsers turn a question into a query: fixed rules (v1, no setup) and an Anthropic model (v2), which falls back to
-the rules when it fails. For v2, set an API key and the model id:
+the rules when it fails. v2 uses the API key of whoever runs the code, so set your own key and the model id:
 ```bash
 setx ANTHROPIC_API_KEY "<your key>"
 setx LLM_MODEL "<model id>"

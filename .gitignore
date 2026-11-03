@@ -12,3 +12,8 @@ venv/
 
 # Downloaded, not committed: raw StatsBomb data
 data/raw/
+
+# Secrets: API keys belong to whoever runs the code, never in the repository
+.env
+*.env
+.streamlit/secrets.toml
