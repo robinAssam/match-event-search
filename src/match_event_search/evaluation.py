@@ -103,26 +103,36 @@ def grade(answer: Answer, expected: dict | None, g: nx.MultiDiGraph, expected_mo
             "n_expected": len(expected_moments), "n_found": len(found)}
 
 
-def evaluate(g: nx.MultiDiGraph, questions: list[dict] = None, llm=None) -> pd.DataFrame:
-    """One row per question and parser: v1, and v2 alone and with fallback if an LLM parser is given."""
+def evaluate(g: nx.MultiDiGraph, questions: list[dict] = None, llm=None, progress=None) -> pd.DataFrame:
+    """One row per question and parser: v1, and v2 alone and with fallback if an LLM parser is given.
+
+    `progress`, if given, is called after each question with (number done, total, a line about it).
+    """
     questions = questions if questions is not None else load_questions()
     vocab = Vocabulary.from_tags(g.graph["tags"])
+    model = llm.config.model if llm is not None else ""
     rows = []
-    for q in questions:
+    for done, q in enumerate(questions, 1):
         expected = q["query"]
         expected_moments = moments(expected, g) if expected is not None else None
         answers = {"v1": answer_v1(q["question"], vocab)}
         if llm is not None:
             answers["v2"], answers["v2 + fallback"] = answer_v2(q["question"], llm)
+        marks = []
         for parser, answer in answers.items():
             score = grade(answer, expected, g, expected_moments)
+            marks.append(f"{parser} {'right' if score['correct'] else 'wrong'}")
             rows.append({"id": q["id"], "category": q["category"], "question": q["question"], "parser": parser,
                          **score, "declined": answer.declined,
                          "query": json.dumps(answer.query, ensure_ascii=False) if answer.query else "",
                          "note": answer.note, "attempts": answer.attempts,
+                         "model": model if parser != "v1" else "",
                          "input_tokens": answer.usage.get("input_tokens", 0),
                          "output_tokens": answer.usage.get("output_tokens", 0),
-                         "cache_read_tokens": answer.usage.get("cache_read_input_tokens", 0)})
+                         "cache_read_tokens": answer.usage.get("cache_read_input_tokens", 0),
+                         "cache_write_tokens": answer.usage.get("cache_creation_input_tokens", 0)})
+        if progress is not None:
+            progress(done, len(questions), f"#{q['id']} {q['question']}: {', '.join(marks)}")
     results = pd.DataFrame(rows)
     # Counts are missing for unanswered questions; keep them whole numbers.
     return results.astype({"n_expected": "Int64", "n_found": "Int64"})
@@ -139,6 +149,7 @@ def summarise(results: pd.DataFrame) -> pd.DataFrame:
         "input_tokens": g.input_tokens.sum(),
         "output_tokens": g.output_tokens.sum(),
         "cache_read_tokens": g.cache_read_tokens.sum(),
+        "cache_write_tokens": g.cache_write_tokens.sum() if "cache_write_tokens" in results else 0,
     })
     summary["correct_pct"] = (100 * summary.correct / summary.questions).round(1)
     summary["exact_pct"] = (100 * summary.exact / summary.questions).round(1)

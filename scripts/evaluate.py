@@ -30,8 +30,13 @@ def main():
     if args.llm and not (os.environ.get("ANTHROPIC_API_KEY") and os.environ.get("LLM_MODEL")):
         sys.exit("--llm needs your own ANTHROPIC_API_KEY and LLM_MODEL in the environment.")
 
+    print("Loading the season and building the graph (about half a minute)...", flush=True)
     g = season_graph()
-    results = evaluate(g, llm=LLMParser(g) if args.llm else None)
+    if args.llm:
+        print("Asking the model each question; every line is one question answered.", flush=True)
+    results = evaluate(g, llm=LLMParser(g) if args.llm else None,
+                       progress=lambda done, total, line: print(f"[{done}/{total}] {line}", flush=True))
+    print()
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     for parser, part in results.groupby("parser", sort=False):

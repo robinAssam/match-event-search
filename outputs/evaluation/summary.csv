@@ -1,2 +1,4 @@
 parser,questions,correct,exact,declined,input_tokens,output_tokens,cache_read_tokens,correct_pct,exact_pct
 v1,31,19,17,0,0,0,0,61.3,54.8
+v2,31,30,27,0,674,2580,200430,96.8,87.1
+v2 + fallback,31,30,27,0,674,2580,200430,96.8,87.1
