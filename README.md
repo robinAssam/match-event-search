@@ -93,8 +93,7 @@ Requires Python 3.11+.
 ```bash
 python -m venv .venv
 .venv\Scripts\activate              # Windows; macOS/Linux: source .venv/bin/activate
-pip install -r requirements.txt
-pip install -e .
+pip install -r requirements.txt     # also installs this project (-e .)
 python scripts/download_data.py     # ~400 MB of StatsBomb open data into data/raw/ (--limit 3 for a quick start)
 pytest
 ```
