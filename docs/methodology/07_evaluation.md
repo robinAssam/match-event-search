@@ -23,7 +23,7 @@ results per question are in [`outputs/evaluation/`](../../outputs/evaluation).
 | Parser | Correct | Exact |
 |---|---|---|
 | Rule-based (v1, baseline) | 19 / 31 (61%) | 17 / 31 (55%) |
-| LLM (v2) | 30 / 31 (97%) | 27 / 31 (87%) |
+| LLM (v2: Anthropic's Opus 5.5, medium effort) | 30 / 31 (97%) | 27 / 31 (87%) |
 | LLM with fallback (v2 + fallback) | 30 / 31 (97%) | 27 / 31 (87%) |
 
 The LLM parser needs an API key, billed to whoever runs it: `python scripts/evaluate.py --llm` with your own
@@ -41,8 +41,11 @@ The LLM parser needs an API key, billed to whoever runs it: `python scripts/eval
   exactly the same moments, which is why the main score compares moments.
 - **Consistent**: two separate runs gave the same verdict on every question; only #27 was written differently, with
   the same moments. Every answer was valid on the first attempt, so the retry and the fallback were never needed.
-- **Tokens per question**: about 22 new input tokens, 6,465 read from the cache (the instructions, the same for every
-  question) and about 80 output tokens.
+- **Tokens and cost**: per question about 22 new input tokens, 6,465 read from the cache (the instructions, the same
+  for every question) and about 80 output tokens. At Opus 5.5's list prices (October 2026: $4 per million input tokens,
+  $20 per million output, $0.20 per million cache reads, $5 per million cache writes) the whole run of 31 questions
+  costs about $0.13, or $0.004 per question. The one cache write of the instructions was not recorded in these runs and
+  is estimated at the size of a cache read; the evaluation now records it.
 
 ## What the rule-based parser gets wrong
 

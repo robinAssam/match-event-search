@@ -42,13 +42,13 @@ query finds exactly the same moments as the expected one. → [notes](docs/metho
 | Parser | Correct | Exact query |
 |---|---|---|
 | Rule-based (v1, baseline) | 19 / 31 (61%) | 17 / 31 (55%) |
-| LLM (v2) | **30 / 31 (97%)** | 27 / 31 (87%) |
+| LLM (v2: Anthropic's Opus 5.5, medium effort) | **30 / 31 (97%)** | 27 / 31 (87%) |
 | LLM with fallback to v1 | 30 / 31 (97%) | 27 / 31 (87%) |
 
 The LLM parser handled the paraphrases, the negation, the point of view ("shots we conceded while we were winning") and
 the misspelt name that the rules miss. Its one miss is the question the format cannot express: instead of saying so, it
 approximated "passes that broke the midfield line" as successful progressive passes from the middle into the final
-third. Two runs gave the same verdict on every question. Every wrong v1 answer came with a "words not used" warning
+third. Two runs gave the same verdict on every question; a run of all 31 questions costs about $0.13. Every wrong v1 answer came with a "words not used" warning
 (12 of 12), against 1 of the 19 correct ones. To re-run the LLM parser, use `python scripts/evaluate.py --llm` with
 your own API key.
 
