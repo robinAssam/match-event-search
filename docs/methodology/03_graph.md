@@ -29,10 +29,11 @@ Possessions never span two halves once these are left out.
 | `contains` | parent → child in the hierarchy | | 142,358 | hierarchical containment |
 | `next` | event → next event in the same half, either team | `dt` (s), `same_possession` | 136,735 | (new) |
 | `same_player` | event → the same player's next event in the same half | `dt` (s) | 134,985 | (new) |
+| `similar` | possession → one of its 5 most similar possessions (stage 9) | `distance` | 23,925 | semantic similarity |
 
 **Same possession** needs no edges: events in one possession share a possession node, and every `next` edge says
 whether it stays in the possession. **Similar situation** edges, the counterpart of the law project's semantic
-similarity, follow in stage 9. The law project's tag-overlap channel becomes the tag filters of the query engine
+similarity, link possessions ([stage 9](09_similarity.md)). The law project's tag-overlap channel becomes the tag filters of the query engine
 (stage 4): events with the same tags are found directly in the tag table.
 
 Edges link each event only to the *next* one, not to every later one, so they grow with the number of events. A

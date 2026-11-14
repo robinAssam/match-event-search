@@ -52,6 +52,14 @@ third. Two runs gave the same verdict on every question; a run of all 31 questio
 (12 of 12), against 1 of the 19 correct ones. To re-run the LLM parser, use `python scripts/evaluate.py --llm` with
 your own API key.
 
+## Similar situations
+Pick a moment and find the possessions across the season that looked most like it, compared by the ball's route,
+tempo and how the possession started, and see how they ended. For Leverkusen's opening goal of the season (Leipzig,
+22:55) the ten most similar possessions are all quick attacks after a regain: 9 reached the box, 5 ended in a shot,
+none in a goal. → [notes](docs/methodology/09_similarity.md)
+
+![The opening goal and its five most similar possessions](outputs/similarity/similar_3895052_44.png)
+
 ## Data
 All 34 Bundesliga matches of Bayer Leverkusen's 2023/24 season (unbeaten: 28 wins, 6 draws), with event data and
 360 freeze-frames. → [notes](docs/methodology/01_data.md)

@@ -66,3 +66,12 @@ def test_stepping_through_a_moment(app):
     press("End ⏭")
     assert app.session_state.frame == n
     assert any("Jeremie Frimpong · shot" in m.value and "step 2 of the question" in m.value for m in app.markdown)
+
+
+def test_finding_similar_situations(app):
+    app.radio(key="parser").set_value("Rule-based (v1)").run()
+    app.text_input(key="question").set_value("Regains in the final third that led to a goal").run()
+    app.toggle(key="find_similar").set_value(True).run()
+    assert not app.exception
+    line = next(m.value for m in app.markdown if "similar possessions" in m.value)
+    assert line.startswith("**Bayer Leverkusen possession from 22:55") and "10 similar possessions" in line

@@ -12,7 +12,8 @@ import streamlit as st
 from match_event_search.graph import season_graph
 from match_event_search.llm_parser import LLMParser
 from match_event_search import describe
-from match_event_search.plotting import moment_events, plot_moment, plot_overview
+from match_event_search.plotting import moment_events, plot_moment, plot_overview, plot_routes
+from match_event_search.similarity import summary as summary_line
 from match_event_search.query import QueryError, search
 from match_event_search.rule_parser import ParseError, Vocabulary, parse_verbose
 
@@ -234,3 +235,53 @@ with right:
             "Action": events.action,
             "Outcome": events.outcome_detail.fillna(events.outcome).fillna(""),
         }), hide_index=True, width="stretch", height=240)
+
+# --- Similar situations -------------------------------------------------------------
+index = g.graph["similarity"]
+match_label = {d["match_id"]: f"{d['date']} {d['home_team']} {d['home_score']}-{d['away_score']} {d['away_team']}"
+               for _, d in g.nodes(data=True) if d["kind"] == "match"}
+moment_possessions = list(dict.fromkeys((int(tags.loc[e, "match_id"]), int(tags.loc[e, "possession"]))
+                                        for e in chosen.steps))
+comparable = [p for p in moment_possessions if p in index]
+
+st.subheader("Similar situations")
+if not comparable:
+    st.caption("The possessions of this moment are too short to compare (fewer than "
+               f"{index.config.min_actions} actions by the team on the ball).")
+else:
+    def possession_label(key):
+        row = index.table.loc[key]
+        return f"{row.team} possession from {row.minute}:{row.second:02d} ({row.actions} actions, {row.duration_s} s)"
+
+    # The last step's possession is where the moment ended (e.g. the shot); the others can be chosen.
+    key = comparable[-1] if len(comparable) == 1 else st.selectbox(
+        "Possession to compare", comparable[::-1], format_func=possession_label)
+    if st.toggle("Find similar situations", key="find_similar",
+                 help="Possessions across the season with the most similar ball route, tempo and start. "
+                      "How they ended is not part of the comparison, so you can see how often such moves "
+                      "lead to a shot or a goal."):
+        neighbours = index.similar(*key, k=10)
+        st.markdown(f"**{possession_label(key)}** · {summary_line(neighbours)}")
+
+        def ending(r):
+            return ("goal" if r.goal else f"shot ({r.xg:.2f} xG)" if r.shot else "lost the ball" if r.lost_ball
+                    else "box entry" if r.box_entry else "other")
+
+        st.dataframe(pd.DataFrame({
+            "Match": [match_label[m] for m, _ in neighbours.index],
+            "Time": [f"{r.minute}:{r.second:02d}" for r in neighbours.itertuples()],
+            "Team": neighbours.team,
+            "Actions": neighbours.actions,
+            "Duration (s)": neighbours.duration_s,
+            "Started": [s.replace("From ", "").lower() + (", regain" if r else "")
+                        for s, r in zip(neighbours.start, neighbours.regain)],
+            "Ended": [ending(r) for r in neighbours.itertuples()],
+            "Distance": neighbours.distance,
+        }), hide_index=True, width="stretch")
+        shown_keys = [key] + list(neighbours.index[:5])
+        fig = plot_routes([index.paths[k] for k in shown_keys],
+                          ["This possession"] + [f"{match_label[m][11:]} {index.table.loc[(m, p)].minute}'"
+                                                 for m, p in neighbours.index[:5]],
+                          [bool(index.table.loc[k].shot) for k in shown_keys])
+        st.pyplot(fig)
+        plt.close(fig)

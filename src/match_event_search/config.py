@@ -98,3 +98,25 @@ class LLMConfig:
     effort: str = "medium"
     max_tokens: int = 16000
     retries: int = 1
+
+
+@dataclass(frozen=True)
+class SimilarityConfig:
+    """Settings for finding similar situations (docs/methodology/09_similarity.md).
+
+    min_actions: possessions with fewer actions by the team on the ball are
+        too short to have a shape (a single clearance, a lost first touch).
+    path_points: the ball's route is resampled to this many points, so
+        possessions of any length can be compared.
+    weights: share of the distance from each part of the vector: the route,
+        the tempo, and how the possession started. The outcome (shot, goal) is
+        left out on purpose, so similar build-ups can be compared by how they
+        ended. Our choice, checked by eye and by how often neighbours start
+        the same way (99% against 27% by chance).
+    neighbours: `similar` edges per possession in the graph.
+    """
+
+    min_actions: int = 3
+    path_points: int = 10
+    weights: tuple[tuple[str, float], ...] = (("path", 0.6), ("tempo", 0.25), ("start", 0.15))
+    neighbours: int = 5

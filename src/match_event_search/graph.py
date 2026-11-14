@@ -13,6 +13,8 @@ Edge kinds (the key of each edge in the MultiDiGraph):
 * `next`         event → the next event in the same half, whoever plays it.
                  Attributes `dt` (seconds) and `same_possession`.
 * `same_player`  event → the same player's next event in the same half, with `dt`.
+* `similar`      possession → one of its most similar possessions (similarity.py), with
+                 `distance`; added by `season_graph`.
 
 Two events in the same possession share a possession node, so "same
 possession" needs no edges of its own; `next` edges also say whether they stay
@@ -155,11 +157,28 @@ def _restart_between(g: nx.MultiDiGraph, a, b) -> bool:
     return False
 
 
-def season_graph() -> nx.MultiDiGraph:
-    """Tag the configured season and build its graph."""
+def add_similar_edges(g: nx.MultiDiGraph, index, k: int):
+    """Link each possession to its k most similar possessions (`similar` edges, attribute `distance`).
+
+    The index (similarity.SimilarityIndex) is kept as g.graph["similarity"].
+    """
+    g.graph["similarity"] = index
+    g.add_edges_from((possession_node(*a), possession_node(*b), "similar", {"distance": d})
+                     for a, b, d in index.all_neighbours(k))
+
+
+def season_graph(similar: bool = True) -> nx.MultiDiGraph:
+    """Tag the configured season and build its graph, with similar-situation edges unless `similar` is False."""
+    from .config import SimilarityConfig
     from .loaders import load_matches
+    from .similarity import SimilarityIndex
     from .tagging import tag_season
-    return build_graph(tag_season(), load_matches())
+    tags = tag_season()
+    g = build_graph(tags, load_matches())
+    if similar:
+        config = SimilarityConfig()
+        add_similar_edges(g, SimilarityIndex(g.graph["tags"], config), config.neighbours)
+    return g
 
 
 def describe(g: nx.MultiDiGraph) -> dict:

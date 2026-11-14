@@ -36,3 +36,11 @@ def test_a_moment_can_be_drawn_up_to_an_event():
     fig = plot_moment(span, ["werner", "frimpong"], upto=2)
     assert fig.axes
     plt.close(fig)
+
+
+def test_routes_grid_draws_and_removes_spare_pitches():
+    from match_event_search.plotting import plot_routes
+    route = np.array([[60, 40], [100, 35]])
+    fig = plot_routes([route] * 4, ["a", "b", "c", "d"], [True, False, False, True], ncols=3)
+    assert len(fig.axes) == 4  # 2 x 3 grid, 2 spare pitches removed
+    plt.close(fig)

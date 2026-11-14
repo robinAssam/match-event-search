@@ -101,3 +101,23 @@ def _legend(ax):
     handles = [plt.Line2D([], [], marker="o", linestyle="", color=OUR_COLOUR, label="Our team"),
                plt.Line2D([], [], marker="o", linestyle="", color=THEIR_COLOUR, label="Opponent")]
     ax.legend(handles=handles, loc="lower center", bbox_to_anchor=(0.5, -0.06), ncol=2, frameon=False, fontsize=9)
+
+
+def plot_routes(routes: list, titles: list, shots: list, ncols: int = 3):
+    """Small pitches with the ball's route of each possession (from the side of the team on the ball).
+
+    routes: arrays of (x, y) points; shots: whether each possession ended in a shot (a star at its end).
+    """
+    nrows = -(-len(routes) // ncols)
+    pitch = _pitch()
+    fig, axs = pitch.grid(nrows=nrows, ncols=ncols, figheight=2.6 * nrows, title_height=0, endnote_height=0,
+                          axis=False, grid_height=0.95)
+    for ax, route, title, shot in zip(np.ravel(axs), routes, titles, shots):
+        pitch.plot(route[:, 0], route[:, 1], ax=ax, color=OUR_COLOUR, lw=2, alpha=0.85, zorder=3)
+        pitch.scatter(route[0, 0], route[0, 1], ax=ax, s=50, color="#1D9E75", zorder=4)
+        if shot:
+            pitch.scatter(route[-1, 0], route[-1, 1], ax=ax, marker="*", s=180, color=THEIR_COLOUR, zorder=5)
+        ax.set_title(title, fontsize=8)
+    for ax in np.ravel(axs)[len(routes):]:
+        ax.remove()
+    return fig
