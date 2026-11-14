@@ -9,13 +9,9 @@ Writes outputs/similarity/similar_<match>_<possession>.png and prints the neighb
 import sys
 from pathlib import Path
 
-import matplotlib
-
-matplotlib.use("Agg")
-
-from match_event_search.graph import season_graph  # noqa: E402
-from match_event_search.plotting import plot_routes  # noqa: E402
-from match_event_search.similarity import summary  # noqa: E402
+from match_event_search.graph import season_graph
+from match_event_search.plotting import plot_routes
+from match_event_search.similarity import summary
 
 OUT_DIR = Path(__file__).resolve().parents[1] / "outputs" / "similarity"
 

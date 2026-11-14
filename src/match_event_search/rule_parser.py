@@ -17,9 +17,8 @@ from .config import DataConfig
 from .query import validate
 
 # "Led to" with no time given: how long to look for the next step when the
-# possession changes (our choice; a little longer than the 10 s transition).
-# A goal gets longer: the season's one goal conceded after a lost goalkeeper
-# pass came 19 s later, after a throw-in.
+# possession changes. Our choice: a little longer than the 10 s transition,
+# and twice that for a goal, which takes longer to finish.
 DEFAULT_WINDOW_S = 15.0
 DEFAULT_GOAL_WINDOW_S = 30.0
 

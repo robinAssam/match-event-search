@@ -65,8 +65,6 @@ def test_tags_are_kept_in_a_table_by_event_id():
                              "possession": 1, "team": "Away", "player": "B"}
 
 
-# --- Real data -------------------------------------------------------------------
-
 EVENTS_DIR = loaders.CACHE_DIR / "events"
 DOWNLOADED = sorted(int(p.stem) for p in EVENTS_DIR.glob("*.json")) if EVENTS_DIR.exists() else []
 requires_data = pytest.mark.skipif(not DOWNLOADED, reason="no matches downloaded")

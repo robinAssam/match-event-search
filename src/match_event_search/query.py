@@ -29,7 +29,6 @@ from . import tagging
 from .config import DataConfig
 from .graph import following
 
-# --- Schema ----------------------------------------------------------------------
 
 BOOLEAN_FIELDS = [
     "cross", "through_ball", "switch", "cutback", "key_pass", "assist", "header",
@@ -160,8 +159,6 @@ def _describe(error: jsonschema.ValidationError) -> str:
         error = max(specific, key=lambda e: len(e.absolute_path))
     return f"{'/'.join(str(p) for p in error.absolute_path) or where}: {error.message}"
 
-
-# --- Engine ----------------------------------------------------------------------
 
 @dataclass
 class Match:

@@ -93,8 +93,6 @@ ROLE_GROUPS = {
 }
 
 
-# --- Zones ---------------------------------------------------------------------
-
 def third(x, config: TagConfig = TagConfig()):
     lo, hi = config.third_lines
     return _bins(x, [lo, hi], THIRDS)
@@ -130,8 +128,6 @@ def _bins(values, edges, labels):
     return out
 
 
-# --- Progressive passes and carries ------------------------------------------------
-
 def metres_to_goal(x, y):
     """Distance (m) to the centre of the goal the acting team attacks."""
     dx = (PITCH.length - np.asarray(x, dtype=float)) * PITCH.length_m / PITCH.length
@@ -152,8 +148,6 @@ def is_progressive(x, y, end_x, end_y, config: TagConfig = TagConfig()):
     needed = np.where(starts_own & ends_own, own, np.where(starts_own != ends_own, across, opponent))
     return progress_m(x, y, end_x, end_y) >= needed
 
-
-# --- Roles and time ------------------------------------------------------------
 
 def role_group(position):
     return ROLE_GROUPS.get(position) if isinstance(position, str) else None
@@ -177,8 +171,6 @@ def time_bucket(period, minute, config: TagConfig = TagConfig()):
     return f"{lo}-{hi}+" if hi == start + 45 else f"{lo}-{hi}"
 
 
-# --- Tagging -------------------------------------------------------------------
-
 def tag_events(events: pd.DataFrame, match_info: pd.Series,
                config: TagConfig = TagConfig(), data: DataConfig = DataConfig()) -> pd.DataFrame:
     """Tag the events of one match (as returned by `loaders.load_events`)."""
@@ -199,12 +191,12 @@ def tag_events(events: pd.DataFrame, match_info: pd.Series,
     out["pass_recipient"] = ev.pass_recipient
     out["xg"] = ev.shot_statsbomb_xg
 
-    # 9. Team
+    # Team
     out["our_team"] = ev.team.eq(data.focus_team)
     out["home"] = ev.team.eq(match_info.home_team)
     out["in_possession"] = ev.team.eq(ev.possession_team)
 
-    # 1. Action
+    # Action
     out["action"] = ev.type.map(_action_name)
     out.loc[ev.type.eq("Duel") & ev.duel_type.eq("Tackle"), "action"] = "tackle"
     out.loc[ev.type.eq("Duel") & ev.duel_type.eq("Aerial Lost"), "action"] = "aerial_duel"
@@ -219,14 +211,14 @@ def tag_events(events: pd.DataFrame, match_info: pd.Series,
     set_piece_shot = ev.shot_type.where(ev.shot_type.isin({"Free Kick", "Penalty"}))
     out["set_piece_type"] = set_piece_pass.combine_first(set_piece_shot).map(_snake, na_action="ignore")
 
-    # 2. Zone
+    # Zone
     out["third"], out["channel"], out["half"] = third(out.x, config), channel(out.y, config), half(out.x)
     out["in_box"] = in_box(out.x, out.y)
     out["in_own_box"] = in_own_box(out.x, out.y)
     out["end_third"], out["end_channel"] = third(out.end_x, config), channel(out.end_y, config)
     out["end_in_box"] = in_box(out.end_x, out.end_y)
 
-    # 4. Role
+    # Role
     out["position"] = ev.position
     out["role_group"] = ev.position.map(role_group)
     out["role_side"] = ev.position.map(role_side)
@@ -234,17 +226,17 @@ def tag_events(events: pd.DataFrame, match_info: pd.Series,
     out["recipient_role_group"] = out.recipient_position.map(role_group)
     out["recipient_role_side"] = out.recipient_position.map(role_side)
 
-    # 5. Pressure
+    # Pressure
     out["under_pressure"] = ev.under_pressure.eq(True)
     out["counterpress"] = ev.counterpress.eq(True)
 
-    # 6. Outcome
+    # Outcome
     out["outcome"], out["outcome_detail"] = _outcomes(ev)
 
-    # 7. Game state
+    # Game state
     _add_game_state(out, match_info)
 
-    # 8. Time
+    # Time
     out["time_bucket"] = [time_bucket(p, m, config) for p, m in zip(out.period, out.minute)]
 
     # Derived actions
@@ -255,7 +247,7 @@ def tag_events(events: pd.DataFrame, match_info: pd.Series,
     out["box_entry"] = completed & ~out.in_box & out.end_in_box
     _add_turnovers(out)
 
-    # 3. Phase (needs regains)
+    # Phase (needs regains)
     out["phase"] = _phases(out, config)
     return out
 

@@ -19,7 +19,7 @@ def xhaka_pass(**changes):
 
 
 def test_headline():
-    assert describe.headline(xhaka_pass()) == "22:57 · Granit Xhaka · pass (Bayer Leverkusen, our team)"
+    assert describe.headline(xhaka_pass()) == "22:57, Granit Xhaka, pass (Bayer Leverkusen, our team)"
 
 
 def test_facts():

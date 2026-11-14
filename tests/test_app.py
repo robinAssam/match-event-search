@@ -30,7 +30,7 @@ def test_a_misspelt_question_is_corrected_and_answered(app):
     app.text_input(key="question").set_value("goalkeeper pass to defender intercepted and led to conceeding goal").run()
     assert not app.exception
     assert app.subheader[0].value == "0 moments"  # the goal came after a throw-in
-    assert app.info[0].value == "Read “conceeding” as “conceding”"
+    assert app.info[0].value == "Read \"conceeding\" as \"conceding\""
 
 
 def test_an_unreadable_question_shows_an_error(app):
@@ -52,20 +52,20 @@ def test_stepping_through_a_moment(app):
     n = app.slider(key="frame").max
     assert app.session_state.frame == n  # a new moment opens on the whole move
     press = lambda label: next(b for b in app.button if b.label == label).click().run()
-    press("⏮ Start")  # the first result: Leverkusen's opening goal of the season, against Leipzig
+    press("Start")  # the first result: Leverkusen's opening goal of the season, against Leipzig
     assert app.session_state.frame == 1
-    assert any("Granit Xhaka · ball recovery" in m.value and "step 1 of the question" in m.value
+    assert any("Granit Xhaka, ball recovery" in m.value and "step 1 of the question" in m.value
                for m in app.markdown)
     assert any(":green-badge[regain]" in m.value for m in app.markdown)
-    press("Next ▶")
+    press("Next")
     assert app.session_state.frame == 2
-    assert any("Granit Xhaka · carry" in m.value for m in app.markdown)
-    press("◀ Back")
-    press("◀ Back")  # cannot go before the first event
+    assert any("Granit Xhaka, carry" in m.value for m in app.markdown)
+    press("Back")
+    press("Back")  # cannot go before the first event
     assert app.session_state.frame == 1
-    press("End ⏭")
+    press("End")
     assert app.session_state.frame == n
-    assert any("Jeremie Frimpong · shot" in m.value and "step 2 of the question" in m.value for m in app.markdown)
+    assert any("Jeremie Frimpong, shot" in m.value and "step 2 of the question" in m.value for m in app.markdown)
 
 
 def test_finding_similar_situations(app):

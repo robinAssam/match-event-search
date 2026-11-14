@@ -66,8 +66,6 @@ def test_summary_line():
                                                  "(0.30 xG), 1 in a goal, 0 in a lost ball")
 
 
-# --- Real data -------------------------------------------------------------------
-
 EVENTS_DIR = loaders.CACHE_DIR / "events"
 DOWNLOADED = {int(p.stem) for p in EVENTS_DIR.glob("*.json")} if EVENTS_DIR.exists() else set()
 requires_season = pytest.mark.skipif(not DOWNLOADED or not set(loaders.load_matches().match_id) <= DOWNLOADED,

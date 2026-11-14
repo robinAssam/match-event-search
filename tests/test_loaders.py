@@ -40,8 +40,6 @@ def test_file_is_downloaded_once(tmp_path, monkeypatch):
     assert (tmp_path / "events" / "1.json").exists()
 
 
-# --- Checks on the real data ---------------------------------------------------
-
 DOWNLOADED = sorted(int(p.stem) for p in EVENTS_DIR.glob("*.json")) if EVENTS_DIR.exists() else []
 requires_data = pytest.mark.skipif(not DOWNLOADED, reason="no matches downloaded")
 

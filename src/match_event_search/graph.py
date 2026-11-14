@@ -2,18 +2,18 @@
 
 Node kinds (attribute `kind`):
 
-* `season` → `match` → `half` → `possession` → `event`, linked by `contains`
+* `season` -> `match` -> `half` -> `possession` -> `event`, linked by `contains`
   edges, like articles in the legal tree. Event nodes are the events with a
   location (136,803 in the season); the rest are administrative (lineups,
   substitutions, half start and end).
 
 Edge kinds (the key of each edge in the MultiDiGraph):
 
-* `contains`     parent → child in the hierarchy.
-* `next`         event → the next event in the same half, whoever plays it.
+* `contains`     parent -> child in the hierarchy.
+* `next`         event -> the next event in the same half, whoever plays it.
                  Attributes `dt` (seconds) and `same_possession`.
-* `same_player`  event → the same player's next event in the same half, with `dt`.
-* `similar`      possession → one of its most similar possessions (similarity.py), with
+* `same_player`  event -> the same player's next event in the same half, with `dt`.
+* `similar`      possession -> one of its most similar possessions (similarity.py), with
                  `distance`; added by `season_graph`.
 
 Two events in the same possession share a possession node, so "same
@@ -98,8 +98,6 @@ def _add_sequence_edges(g: nx.MultiDiGraph, events: pd.DataFrame, by: list, key:
     else:
         g.add_edges_from((a, b, key, {"dt": d}) for a, b, d in zip(src.id, dst.id, dt))
 
-
-# --- Navigation ------------------------------------------------------------------
 
 def children(g: nx.MultiDiGraph, node) -> list:
     return [v for _, v, k in g.out_edges(node, keys=True) if k == "contains"]

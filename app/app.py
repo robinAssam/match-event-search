@@ -30,7 +30,7 @@ MAX_ROWS = 1000
 PARSERS = ["Rule-based (v1)", "LLM (v2)"]
 
 GUIDE = """
-**Build the question in this order:** *[who] [action] [where / when]* → **that led to** → *[next action]*
+**Build the question in this order:** *[who] [action] [where / when]*, then **that led to**, then *[next action]*
 *[within N seconds]*. Steps are split at "led to", "followed by", "resulting in" and "then".
 
 | You want | Write |
@@ -62,7 +62,7 @@ GUIDE = """
 st.set_page_config(page_title="Match event search", page_icon=":soccer:", layout="wide")
 
 
-@st.cache_resource(show_spinner="Tagging the season and building the graph…")
+@st.cache_resource(show_spinner="Tagging the season and building the graph...")
 def load():
     g = season_graph()
     return g, Vocabulary.from_tags(g.graph["tags"]), LLMParser(g)
@@ -85,7 +85,7 @@ def read_question(question: str, parser: str):
         return parsed.query, parsed.unparsed, parsed.corrected, None
     answers = llm_answers()
     if question not in answers:
-        with st.spinner("Asking the model…"):
+        with st.spinner("Asking the model..."):
             result = llm.parse(question)
         if result.parser == "llm":
             answers[question] = result
@@ -111,7 +111,7 @@ g, vocab, llm = load()
 tags = g.graph["tags"]
 
 st.title("Match event search")
-st.caption("Bayer Leverkusen, Bundesliga 2023/24 · 34 matches · data: StatsBomb open data.")
+st.caption("Bayer Leverkusen, Bundesliga 2023/24, 34 matches. Data: StatsBomb open data.")
 
 if "question" not in st.session_state:
     st.session_state.question = EXAMPLES[0]
@@ -161,7 +161,7 @@ if llm_result is not None:
     else:
         st.warning(f"The LLM parser was not used: {llm_result.note}. The rule-based parser answered.")
 if corrected:
-    st.info("Read " + ", ".join(f"“{a}” as “{b}”" for a, b in corrected.items()))
+    st.info("Read " + ", ".join(f"\"{a}\" as \"{b}\"" for a, b in corrected.items()))
 if unparsed:
     st.warning("Words the parser did not use: " + ", ".join(unparsed))
 
@@ -189,7 +189,7 @@ chosen = shown.iloc[rows[0] if rows else 0]
 left, right = st.columns(2)
 with left:
     first_steps = tags.loc[[s[0] for s in results.steps]]
-    fig = plot_overview(first_steps, title=f"Where the {len(results):,} moment{'' if len(results) == 1 else 's'} started (our attack →)")
+    fig = plot_overview(first_steps, title=f"Where the {len(results):,} moment{'' if len(results) == 1 else 's'} started (we attack left to right)")
     st.pyplot(fig)
     plt.close(fig)
 with right:
@@ -207,20 +207,20 @@ with right:
 
     if n > 1:
         start, back, forward, whole = st.columns(4)
-        start.button("⏮ Start", on_click=go_to, args=(1,), width="stretch")
-        back.button("◀ Back", on_click=lambda: go_to(st.session_state.frame - 1), width="stretch")
-        forward.button("Next ▶", on_click=lambda: go_to(st.session_state.frame + 1), width="stretch")
-        whole.button("End ⏭", on_click=go_to, args=(n,), width="stretch")
+        start.button("Start", on_click=go_to, args=(1,), width="stretch")
+        back.button("Back", on_click=lambda: go_to(st.session_state.frame - 1), width="stretch")
+        forward.button("Next", on_click=lambda: go_to(st.session_state.frame + 1), width="stretch")
+        whole.button("End", on_click=go_to, args=(n,), width="stretch")
         st.slider("Event", 1, n, key="frame", label_visibility="collapsed")
     frame = st.session_state.frame if n > 1 else 1
-    title = f"{chosen.match}, {time_label(chosen)} · event {frame} of {n} (our attack →)"
+    title = f"{chosen.match}, {time_label(chosen)}, event {frame} of {n} (we attack left to right)"
     fig = plot_moment(span, list(chosen.steps), title=title, upto=frame)
     st.pyplot(fig)
     plt.close(fig)
 
     current = events.iloc[frame - 1]
     step = list(chosen.steps).index(current.name) + 1 if current.name in chosen.steps else None
-    st.markdown(f"**{describe.headline(current)}**" + (f" · step {step} of the question" if step else ""))
+    st.markdown(f"**{describe.headline(current)}**" + (f" (step {step} of the question)" if step else ""))
     st.markdown("  \n".join(f"{label}: {text}" for label, text in describe.facts(current)))
     for tag, why in describe.tags(current):
         st.markdown(f":green-badge[{tag}] {why}")
@@ -228,7 +228,7 @@ with right:
     with st.expander("All events of this moment"):
         st.dataframe(pd.DataFrame({
             "#": range(1, n + 1),
-            "Step": ["●" if e in chosen.steps else "" for e in events.index],
+            "Step": [str(list(chosen.steps).index(e) + 1) if e in chosen.steps else "" for e in events.index],
             "Time": [time_label(r) for r in events.itertuples()],
             "Team": events.team,
             "Player": events.player,
@@ -236,7 +236,6 @@ with right:
             "Outcome": events.outcome_detail.fillna(events.outcome).fillna(""),
         }), hide_index=True, width="stretch", height=240)
 
-# --- Similar situations -------------------------------------------------------------
 index = g.graph["similarity"]
 match_label = {d["match_id"]: f"{d['date']} {d['home_team']} {d['home_score']}-{d['away_score']} {d['away_team']}"
                for _, d in g.nodes(data=True) if d["kind"] == "match"}
@@ -261,7 +260,7 @@ else:
                       "How they ended is not part of the comparison, so you can see how often such moves "
                       "lead to a shot or a goal."):
         neighbours = index.similar(*key, k=10)
-        st.markdown(f"**{possession_label(key)}** · {summary_line(neighbours)}")
+        st.markdown(f"**{possession_label(key)}**: {summary_line(neighbours)}")
 
         def ending(r):
             return ("goal" if r.goal else f"shot ({r.xg:.2f} xG)" if r.shot else "lost the ball" if r.lost_ball

@@ -24,7 +24,7 @@ def headline(e: pd.Series) -> str:
     side = "our team" if e.our_team else "opponent"
     who = e.player if _known(e.player) else e.team
     action = ACTION_LABELS.get(e.action, _words(e.action))
-    return f"{int(e.minute)}:{int(e.second):02d} · {who} · {action} ({e.team}, {side})"
+    return f"{int(e.minute)}:{int(e.second):02d}, {who}, {action} ({e.team}, {side})"
 
 
 def facts(e: pd.Series) -> list[tuple[str, str]]:

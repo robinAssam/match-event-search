@@ -59,8 +59,6 @@ def test_time_buckets_put_stoppage_time_in_the_last_window():
     assert time_bucket(2, 94) == "75-90+"
 
 
-# --- Real data -------------------------------------------------------------------
-
 OPENING_GOAL_MATCH = 3895052  # Leverkusen 3-2 RB Leipzig, 19 August 2023
 EVENTS_DIR = loaders.CACHE_DIR / "events"
 DOWNLOADED = sorted(int(p.stem) for p in EVENTS_DIR.glob("*.json")) if EVENTS_DIR.exists() else []
@@ -113,8 +111,6 @@ def test_frimpongs_goal(opening_goal):
     assert shot.phase == "transition" and shot.game_state == "drawing"
     assert shot.role_group == "FB" and shot.time_bucket == "15-30"
 
-
-# --- Checks on every downloaded match --------------------------------------------
 
 requires_data = pytest.mark.skipif(not DOWNLOADED, reason="no matches downloaded")
 

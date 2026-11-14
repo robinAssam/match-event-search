@@ -56,8 +56,6 @@ def test_vocabulary_from_tags():
     assert vocab.teams["bayern"] == "Bayern Munich" and "bayer leverkusen" not in vocab.teams
 
 
-# --- The two example questions -------------------------------------------------------
-
 def test_progressive_passes_by_the_left_back_after_the_60th_minute():
     assert parse("Progressive passes by the left back after the 60th minute", VOCAB) == {"event": {
         "minute": {"gte": 60}, "role_group": "FB", "role_side": "left", "progressive": True,
@@ -69,8 +67,6 @@ def test_turnovers_in_our_own_half_that_led_to_a_shot_within_10_seconds():
         {"filter": {"turnover": True, "our_team": True, "half": "own"}},
         {"filter": {"action": "shot"}, "within_s": 10.0, "team": "other"}]}
 
-
-# --- Single rules -------------------------------------------------------------------
 
 def event(question):
     return parse(question, VOCAB)["event"]
@@ -125,8 +121,6 @@ def test_players_and_receivers():
     assert event("Florian Wirtz dribbles")["player"] == "Florian Wirtz"
 
 
-# --- Teams, halves and scope ---------------------------------------------------------
-
 def test_our_team_unless_the_question_says_otherwise():
     assert event("shots")["our_team"] is True
     assert event("their shots")["our_team"] is False
@@ -154,8 +148,6 @@ def test_opponent_and_venue():
     assert q["matches"] == {"opponent": "Bayern Munich"} and q["event"]["our_team"] is False
 
 
-# --- Sequences ------------------------------------------------------------------------
-
 def test_after_a_turnover_the_next_step_is_the_other_team_within_the_default_window():
     q = parse("turnovers that led to a shot", VOCAB)
     assert q["sequence"][1] == {"filter": {"action": "shot"}, "team": "other", "within_s": DEFAULT_WINDOW_S}
@@ -174,8 +166,6 @@ def test_three_steps():
     assert q["sequence"][2]["within_s"] == 10.0
 
 
-# --- Errors and leftovers ------------------------------------------------------------------
-
 def test_nothing_recognised_is_an_error():
     with pytest.raises(ParseError, match="nothing recognised"):
         parse("hello there", VOCAB)
@@ -184,8 +174,6 @@ def test_nothing_recognised_is_an_error():
 def test_unused_words_are_reported():
     assert parse_verbose("Wirtz dribbles across the pitch", VOCAB).unparsed == ["across", "pitch"]
 
-
-# --- On the real season ------------------------------------------------------------------
 
 EVENTS_DIR = loaders.CACHE_DIR / "events"
 DOWNLOADED = {int(p.stem) for p in EVENTS_DIR.glob("*.json")} if EVENTS_DIR.exists() else set()
@@ -213,8 +201,6 @@ def test_example_questions_find_the_same_moments_as_the_hand_written_queries(sea
     assert len(search(parse("Progressive passes by the left back after the 60th minute", vocab), g)) == 105
     assert len(search(parse("Turnovers in our own half that led to a shot within 10 seconds", vocab), g)) == 18
 
-
-# --- Fixes after testing: defenders, receivers, "intercepted", typos, goal window ----------
 
 def test_defenders_are_centre_backs_and_full_backs():
     assert event("passes by defenders")["role_group"] == ["CB", "FB"]

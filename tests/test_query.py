@@ -14,8 +14,6 @@ TURNOVER_TO_SHOT = {"sequence": [
 ]}
 
 
-# --- Schema ----------------------------------------------------------------------
-
 @pytest.mark.parametrize("query", [
     {"event": {"action": "pass", "progressive": True, "role_group": "FB", "role_side": "left",
                "our_team": True, "minute": {"gte": 60}}},
@@ -48,8 +46,6 @@ def test_invalid_queries_say_what_is_wrong(query, message):
     with pytest.raises(QueryError, match=message):
         validate(query)
 
-
-# --- Engine on a hand-made match -----------------------------------------------------
 
 def toy_graph():
     """We lose the ball (e1); they win it (e2) and shoot after 9 s (e4); we shoot later (e6)."""
@@ -146,8 +142,6 @@ def test_unknown_names_are_reported(toy):
     with pytest.raises(QueryError, match="unknown opponent 'Bayern'"):
         find({"event": {"action": "shot"}, "matches": {"opponent": "Bayern"}}, toy)
 
-
-# --- Real data -------------------------------------------------------------------
 
 EVENTS_DIR = loaders.CACHE_DIR / "events"
 DOWNLOADED = sorted(int(p.stem) for p in EVENTS_DIR.glob("*.json")) if EVENTS_DIR.exists() else []
