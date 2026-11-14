@@ -1,7 +1,7 @@
 """Match event search: ask a question about Leverkusen's 2023/24 season and see the moments on the pitch.
 
 Run from the repository root:
-    streamlit run app/app.py
+    python -m streamlit run app/app.py
 """
 import json
 

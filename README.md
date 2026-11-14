@@ -102,10 +102,10 @@ pytest
 Then:
 
 ```bash
-streamlit run app/app.py                                         # the search page
-python scripts/ask.py "Wirtz's dribbles in the box"              # one question in the terminal
-python scripts/evaluate.py                                       # the evaluation (add --llm for v2)
-python scripts/find_similar.py                                   # similar situations, with a figure
+python -m streamlit run app/app.py                   # the search page
+python scripts/ask.py "Wirtz's dribbles in the box"  # one question in the terminal
+python scripts/evaluate.py                           # the evaluation (add --llm for v2)
+python scripts/find_similar.py                       # similar situations, with a figure
 ```
 
 The LLM parser uses the API key of whoever runs the code; set your own `ANTHROPIC_API_KEY` and the model id in

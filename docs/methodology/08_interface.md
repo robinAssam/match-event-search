@@ -1,7 +1,9 @@
 # 8. Interface
 
 [`app/app.py`](../../app/app.py) is a Streamlit page over everything built so far. Run it with
-`streamlit run app/app.py`; the first load tags the season and builds the graph (about 15 s, then cached).
+`python -m streamlit run app/app.py`; the first load tags the season, builds the graph and the similarity index (30-60 s, then cached).
+On Windows with Smart App Control, `streamlit run` can be blocked because pip's `streamlit.exe` launcher is
+unsigned; starting it through Python as above avoids that.
 
 - **Question box** with example questions, a "How to ask" guide, and a choice of parser: rule-based (stage 5) or
   LLM (stage 6). The page shows which parser answered (and why the rule-based parser stepped in, if it did), typos it
